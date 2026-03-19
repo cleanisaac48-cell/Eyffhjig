@@ -14,7 +14,7 @@ const {
   getUserProfilePhoto,
   updateMedia, // Assuming updateMedia is also in userController
   setMediaUpdateTimestamp // Assuming this controller function will be added
-} = require("../controllers/userController");
+} = require("../controller/userController");
 
 // Configure multer for personal info files
 const personalUpload = multer({

@@ -2,8 +2,8 @@ const { createClient } = require("@supabase/supabase-js");
 const jwt = require("jsonwebtoken");
 const emailService = require("../services/emailService");
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.ANON_KEY || 'placeholder_key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Using centralized EmailService (SendGrid/SMTP)

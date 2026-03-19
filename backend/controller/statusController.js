@@ -2,8 +2,8 @@
 const jwt = require("jsonwebtoken");
 const { createClient } = require("@supabase/supabase-js");
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.ANON_KEY || 'placeholder_key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 exports.getUserStatus = async (req, res) => {

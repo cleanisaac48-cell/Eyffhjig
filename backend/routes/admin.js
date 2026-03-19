@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const adminController = require("../controllers/adminController");
+const adminController = require("../controller/adminController");
 const { createClient } = require("@supabase/supabase-js");
 const jwt = require("jsonwebtoken");
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.ANON_KEY || 'placeholder_key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Admin authentication middleware

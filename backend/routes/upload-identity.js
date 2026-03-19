@@ -22,8 +22,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.ANON_KEY || 'placeholder_key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Helper function to upload to Cloudinary

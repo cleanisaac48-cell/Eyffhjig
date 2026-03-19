@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-const { savePersonalInfo } = require("../controllers/userController");
+const { savePersonalInfo } = require("../controller/userController");
 
 // Configure multer for file uploads
 const upload = multer({

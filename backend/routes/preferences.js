@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const { savePreferences, getCurrentPreferences, updatePreferences } = require("../controllers/userController");
+const { savePreferences, getCurrentPreferences, updatePreferences } = require("../controller/userController");
 
 // Configure multer for form data
 const upload = multer({

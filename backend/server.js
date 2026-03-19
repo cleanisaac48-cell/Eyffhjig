@@ -91,7 +91,7 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 const upload = require('./middleware/upload'); // Assuming you have multer setup in middleware
-const userController = require('./controllers/userController'); // Assuming you have userController
+const userController = require('./controller/userController'); // Assuming you have userController
 
 
 // Routes
@@ -121,8 +121,8 @@ app.use(express.json({ limit: "200mb" }));
 app.use(express.urlencoded({ extended: true, limit: "200mb" }));
 
 // ✅ Supabase Client Initialization
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.ANON_KEY || 'placeholder_key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ✅ Serve static files for frontend  
