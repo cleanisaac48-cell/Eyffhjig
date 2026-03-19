@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Takeyours | Submission Status</title>
+  <link rel="stylesheet" href="submission.css" />
+</head>
+<body>
+
+  <!-- ✅ Spinner OUTSIDE of #mainContent -->
+  <div class="spinner-overlay" id="spinnerOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="ty-container">
+    <header class="ty-header">Takeyours</header>
+
+    <main class="ty-content" id="mainContent" style="display: none;">
+      
+      <p class="ty-status-msg" id="reviewMessage"></p>
+
+      <div id="adminMessageContainer" class="ty-admin-message" style="display: none;">
+        <strong>Admin Feedback:</strong>
+        <p id="adminMessageText"></p>
+      </div>
+      
+      <button id="uploadAgainBtn" class="ty-upload-btn" style="display: none;">
+        Upload Again
+      </button>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="submission.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+
+{
+  "id": "com.takeyours.app",
+  "name": "Takeyours - No. 1 Dating Platform",
+  "short_name": "Takeyours",
+  "description": "Takeyours is the ultimate global dating platform. Find your perfect match with video interactions and a worldwide community.",
+  "start_url": "https://takeyours-xbek.onrender.com/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d6efd",
+  "theme_color": "#0d6efd",
+  "icons": [
+    {
+      "src": "https://takeyours-xbek.onrender.com/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://takeyours-xbek.onrender.com/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://takeyours-xbek.onrender.com/images/screenshot1.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
+    },
+    {
+      "src": "https://takeyours-xbek.onrender.com/images/screenshot2.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
+    }
+  ]
+}

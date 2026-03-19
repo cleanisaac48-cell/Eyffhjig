@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Takeyours – Personal Info</title>
+  <link rel="stylesheet" href="match-form.css" />
+  <style>
+    .tk-spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #c8e6c9;
+      border-top-color: #2e7d32;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<div id="debugBox" style="background: #f0f0f0; padding: 10px; margin-top: 20px; font-family: monospace; font-size: 14px;"></div>
+
+<body>
+  <!-- Spinner Overlay -->
+  <div id="spinnerOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="tk-spinner"></div>
+  </div>
+
+  <header class="tk-header">Takeyours</header>
+
+  <main class="tk-container">
+    <form id="personalForm" class="tk-form" enctype="multipart/form-data">
+      <h2>Personal Information</h2>
+
+      <p class="tk-note">
+        📋 <strong>Please provide your information as they appear in your ID where applicable</strong>
+      </p>
+
+      <label>Full Name</label>
+      <input type="text" name="full_name" required />
+
+      <label>National ID Number</label>
+      <input type="text" name="national_id_number" required />
+
+      <label>Date of Birth</label>
+      <input type="date" name="dob" required />
+
+      <label>Gender</label>
+      <select name="gender" required>
+        <option value="">Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Non-Binary</option>
+        <option>Other</option>
+      </select>
+
+      <label>Sexual Orientation</label>
+      <select name="orientation" required>
+        <option value="">Select</option>
+        <option>Heterosexual</option>
+        <option>Homosexual</option>
+        <option>Bisexual</option>
+        <option>Pansexual</option>
+        <option>Asexual</option>
+        <option>Other</option>
+      </select>
+
+      <label>Country of Birth</label>
+      <input type="text" name="country_of_birth" required />
+
+      <label>Country of Residence</label>
+      <input type="text" name="country_of_residence" required />
+
+      <label>County of Residence</label>
+      <input type="text" name="county_of_residence" required />
+
+      <label>Willing to Relocate?</label>
+      <select name="willing_to_relocate" required>
+        <option>Yes</option>
+        <option>No</option>
+        <option>Maybe</option>
+      </select>
+
+      <label>Languages Spoken</label>
+      <select name="languages" multiple required>
+        <option>English</option>
+        <option>Swahili</option>
+        <option>French</option>
+        <option>Arabic</option>
+        <option>Spanish</option>
+      </select>
+
+      <label>Preferred Language in Relationship</label>
+      <select name="preferred_language" required>
+        <option>English</option>
+        <option>Swahili</option>
+        <option>French</option>
+        <option>Arabic</option>
+        <option>Spanish</option>
+      </select>
+
+      <label>Highest Education Level</label>
+      <select name="education" required>
+        <option>Primary</option>
+        <option>Secondary</option>
+        <option>High School</option>
+        <option>Diploma</option>
+        <option>Bachelor’s</option>
+        <option>Master’s</option>
+        <option>PhD</option>
+      </select>
+
+      <label>Occupation</label>
+      <input type="text" name="occupation" required />
+
+      <label>Employment Type</label>
+      <select name="employment_type" required>
+        <option>Full-time</option>
+        <option>Part-time</option>
+        <option>Freelancer</option>
+        <option>Self-employed</option>
+        <option>Student</option>
+        <option>Unemployed</option>
+        <option>Retired</option>
+      </select>
+
+      <label>Religion</label>
+      <select name="religion" required>
+        <option>Christian</option>
+        <option>Muslim</option>
+        <option>Hindu</option>
+        <option>Buddhist</option>
+        <option>Jewish</option>
+        <option>Atheist</option>
+        <option>Agnostic</option>
+        <option>Other</option>
+      </select>
+
+      <label>Religious Importance</label>
+      <select name="religious_importance" required>
+        <option>Not important</option>
+        <option>Somewhat important</option>
+        <option>Very important</option>
+        <option>Mandatory</option>
+      </select>
+
+      <label>Political Views</label>
+      <select name="political_views" required>
+        <option>Liberal</option>
+        <option>Moderate</option>
+        <option>Conservative</option>
+        <option>Apolitical</option>
+      </select>
+
+      <label>Height (cm)</label>
+      <input type="number" name="height" min="120" max="220" required />
+
+      <label>Weight (kg)</label>
+      <input type="number" name="weight" min="30" max="200" required />
+
+      <label>Skin Color</label>
+      <select name="skin_color" required>
+        <option>Very Light</option>
+        <option>Light</option>
+        <option>Fair</option>
+        <option>Olive</option>
+        <option>Brown</option>
+        <option>Dark Brown</option>
+        <option>Chocolate</option>
+        <option>Deep Black</option>
+        <option>Albino</option>
+      </select>
+
+      <label>Body Type</label>
+      <select name="body_type" required>
+        <option>Slim</option>
+        <option>Athletic</option>
+        <option>Average</option>
+        <option>Curvy</option>
+        <option>Plus-size</option>
+        <option>Fit</option>
+        <option>Muscular</option>
+      </select>
+
+      <label>Eye Color</label>
+      <select name="eye_color" required>
+        <option>Brown</option>
+        <option>Black</option>
+        <option>Blue</option>
+        <option>Green</option>
+        <option>Hazel</option>
+        <option>Grey</option>
+        <option>Other</option>
+      </select>
+
+      <label>Hair Color</label>
+      <select name="hair_color" required>
+        <option>Black</option>
+        <option>Brown</option>
+        <option>Blonde</option>
+        <option>Red</option>
+        <option>Grey</option>
+        <option>Dyed</option>
+        <option>Bald</option>
+      </select>
+
+      <label>Ethnicity</label>
+      <select name="ethnicity" required>
+        <option>African</option>
+        <option>Asian</option>
+        <option>Caucasian</option>
+        <option>Latino</option>
+        <option>Mixed</option>
+        <option>Other</option>
+      </select>
+
+      <label>Diet</label>
+      <select name="diet" required>
+        <option>Omnivore</option>
+        <option>Vegetarian</option>
+        <option>Vegan</option>
+        <option>Pescatarian</option>
+        <option>Halal</option>
+        <option>Kosher</option>
+        <option>Other</option>
+      </select>
+
+      <label>Smoking</label>
+      <select name="smoking" required>
+        <option>No</option>
+        <option>Occasionally</option>
+        <option>Regularly</option>
+      </select>
+
+      <label>Drinking</label>
+      <select name="drinking" required>
+        <option>No</option>
+        <option>Occasionally</option>
+        <option>Socially</option>
+        <option>Regularly</option>
+      </select>
+
+      <label>Exercise</label>
+      <select name="exercise" required>
+        <option>Never</option>
+        <option>Sometimes</option>
+        <option>Regularly</option>
+        <option>Daily</option>
+      </select>
+
+      <label>Pets</label>
+      <select name="pets" required>
+        <option>None</option>
+        <option>Dog</option>
+        <option>Cat</option>
+        <option>Bird</option>
+        <option>Reptile</option>
+        <option>Other</option>
+      </select>
+
+      <label>Living Situation</label>
+      <select name="living_situation" required>
+        <option>Alone</option>
+        <option>With Parents</option>
+        <option>With Roommates</option>
+        <option>With Children</option>
+        <option>Other</option>
+      </select>
+
+      <label>Do You Have Children?</label>
+      <select name="children" required>
+        <option>No</option>
+        <option>Yes</option>
+        <option>Prefer not to say</option>
+      </select>
+
+      <p class="tk-note">
+        📢 <strong>Don't share your social media info or contact details to avoid jokers.</strong><br />
+        🎥 <strong>Video Instructions:</strong> Record a video (max 30 seconds, under 100MB) answering at least 3 of these:<br />
+        – What makes you happiest in a relationship?<br />
+        – Describe your perfect weekend.<br />
+        – What values guide your life?<br />
+        – How do you handle conflict?<br />
+        – What are your deal breakers?<br />
+        – What's your idea of emotional intimacy?
+      </p>
+
+      <label>Profile Photo</label>
+      <input type="file" name="photo" accept="image/*" required />
+
+      <label>Profile Video (Answer Personality Questions)</label>
+      <input type="file" name="video" accept="video/*" required />
+
+      <div class="tk-spinner" id="spinner"></div>
+      <button type="submit" id="submitBtn">
+        Continue to Preferences
+        <div id="submitSpinner" style="display: none;" class="tk-spinner"></div>
+      </button>
+    </form>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="personal.js"></script>
+</body>
+</html>

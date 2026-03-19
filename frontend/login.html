@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Takeyours | Login</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .ty-message {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: red;
+      text-align: center;
+    }
+    .ty-success {
+      color: green;
+    }
+    .ty-toggle-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #00b894;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .ty-forgot {
+      text-align: right;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .ty-forgot a {
+      color: #0984e3;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .ty-center {
+      text-align: center;
+      margin-top: 1.2rem;
+      font-size: 0.9rem;
+    }
+    .ty-center a {
+      color: #00b894;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .ty-password {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="ty-register-box">
+    <div class="ty-logo-form">Takeyours</div>
+    <form class="ty-form" id="loginForm">
+      <label>Email *</label>
+      <input type="email" id="email" required />
+
+      <label>Password *</label>
+      <div class="ty-password">
+        <input type="password" id="password" required />
+        <button type="button" class="ty-toggle-icon" onclick="togglePassword('password')">Show</button>
+      </div>
+
+      <div class="ty-forgot">
+        <a id="forgotPasswordLink">Forgot password?</a>
+      </div>
+
+      <div class="ty-message" id="loginMsg"></div>
+      <div class="ty-loading" id="loadingMsg" style="display: none;">Processing...</div>
+
+      <button type="submit" class="ty-submit-btn">Sign In</button>
+    </form>
+
+    <div class="ty-center">
+      Don't have an account? <a href="register.html">Sign Up</a>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    function togglePassword(id) {
+      const input = document.getElementById(id);
+      const btn = input.nextElementSibling;
+      if (input.type === "password") {
+        input.type = "text";
+        btn.innerText = "Hide";
+      } else {
+        input.type = "password";
+        btn.innerText = "Show";
+      }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const msg = document.getElementById("loginMsg");
+      const loader = document.getElementById("loadingMsg");
+
+      msg.innerText = "";
+      loader.style.display = "block";
+
+      try {
+        const res = await fetch(`${config.API_BASE_URL}/api/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        loader.style.display = "none";
+
+        if (res.ok && data.token) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("email", data.email);
+
+          msg.classList.add("ty-success");
+          msg.innerText = "Login successful!";
+
+          // ✅ Redirect based on step
+          const progressRes = await fetch(`${config.API_BASE_URL}/api/user/progress`, {
+            headers: { Authorization: `Bearer ${data.token}` }
+          });
+
+          const progress = await progressRes.json();
+          const step = progress.current_step || "identity";
+          const status = progress.status || "pending";
+
+          if (status === "approved") {
+            window.location.href = "dashboard_page.html";
+          } else if (status === "disapproved") {
+            window.location.href = "submission.html";
+          } else {
+            if (step === "identity") window.location.href = "identity-verification.html";
+            else if (step === "personal") window.location.href = "personal.html";
+            else if (step === "preferences") window.location.href = "preferences.html";
+            else if (step === "submission") window.location.href = "submission.html";
+            else window.location.href = "identity-verification.html";
+          }
+        } else {
+          msg.innerText = data.error || "Login failed.";
+        }
+      } catch (err) {
+        loader.style.display = "none";
+        msg.innerText = "❌ Network error. Try again.";
+      }
+    });
+
+    document.getElementById("forgotPasswordLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const msg = document.getElementById("loginMsg");
+
+      if (!email) {
+        msg.innerText = "Please enter your email first.";
+        return;
+      }
+
+      msg.innerText = "Checking account...";
+
+      try {
+        const res = await fetch(`${config.API_BASE_URL}/api/forgot-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          sessionStorage.setItem("resetEmail", email);
+          window.location.href = "forgot-otp.html";
+        } else {
+          msg.innerText = data.error || "Account not found.";
+        }
+      } catch (err) {
+        msg.innerText = "❌ Network error. Try again.";
+      }
+    });
+  </script>
+</body>
+</html>

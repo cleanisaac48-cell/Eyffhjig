@@ -1,0 +1,101 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f2f2f2;
+}
+
+.admin-dash-container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 40px 20px;
+  background: white;
+  min-height: 100vh;
+}
+
+.admin-header {
+  text-align: center;
+  color: #2ecc71;
+  margin-bottom: 30px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+.admin-table th,
+.admin-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.admin-table th {
+  background-color: #3498db;
+  color: white;
+}
+
+.admin-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.admin-action-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 5px;
+}
+
+.admin-action-btn:hover {
+  background: #27ae60;
+}
+
+.premium-btn {
+  background-color: #ff6b35;
+}
+
+.admin-action-btn:hover {
+  background-color: #0056b3;
+}
+
+.status-badge, .subscription-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-disapproved {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.subscription-free {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.subscription-premium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.admin-table {
+  margin: 20px;
+}

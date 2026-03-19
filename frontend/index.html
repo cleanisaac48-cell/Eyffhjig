@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Takeyours - No. 1 Dating Platform</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+
+  <!-- ✅ SEO Meta Tags -->
+  <meta name="description" content="Takeyours is the No. 1 global dating platform. Find your perfect match with real-time video interactions and a worldwide community. Fast, secure, and free to join." />
+  <meta name="keywords" content="dating, online dating, global dating, relationships, meet singles, Takeyours" />
+  <meta name="author" content="Takeyours" />
+
+  <!-- ✅ Open Graph (for social media previews) -->
+  <meta property="og:title" content="Takeyours - No. 1 Dating Platform" />
+  <meta property="og:description" content="Join Takeyours, the ultimate global dating platform. Connect, chat, and find your type instantly." />
+  <meta property="og:url" content="https://takeyours.onrender.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://takeyours.onrender.com/images/preview.png" />
+
+  <!-- ✅ Twitter Card (for X/Twitter previews) -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Takeyours - No. 1 Dating Platform" />
+  <meta name="twitter:description" content="Global, fast, and secure dating platform. Find love today on Takeyours." />
+  <meta name="twitter:image" content="https://takeyours.onrender.com/images/preview.png" />
+
+  <!-- ✅ Canonical URL -->
+  <link rel="canonical" href="https://takeyours.onrender.com/" />
+
+  <!-- ✅ Favicon -->
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
+</head>
+<body>
+  <header class="ty-header">
+    <div class="ty-logo">Takeyours</div>
+    <nav class="ty-nav">
+      <a href="login.html" class="ty-signin">Sign In</a>
+      <a href="register.html" class="ty-signup">Sign Up Free</a>
+    </nav>
+  </header>
+
+  <!-- ✅ Corrected APK Download Button -->
+  <div id="apk-download" style="text-align:center; margin: 20px 0;">
+    <a href="/takeyours.apk" download
+       style="display:inline-block; padding:12px 24px; background:#2196f3; color:white; text-decoration:none; border-radius:8px; font-weight:bold;">
+      ⬇️ Download Android App
+    </a>
+  </div>
+
+  <section class="ty-hero">
+    <div class="ty-hero-text">
+      <h1>We Make It Global and Fast</h1>
+      <h2>We Gat Your Type Waiting and Ready</h2>
+      <h3>Takeyours is No. 1 Dating Platform</h3>
+      <a href="register.html" class="ty-cta-btn">Create Free Account</a>
+    </div>
+    <div class="ty-hero-img">
+      <img src="hero-illustration.svg" alt="Dating Illustration" />
+    </div>
+  </section>
+
+  <section class="ty-gallery">
+    <h2>Recent Match Videos</h2>
+    <div class="ty-video-grid">
+      <video src="video1.mp4" controls></video>
+      <video src="video2.mp4" controls></video>
+      <video src="video3.mp4" controls></video>
+    </div>
+    <a href="register.html" class="ty-view-more-btn">View More</a>
+  </section>
+
+  <section class="ty-about">
+    <h2>About Takeyours</h2>
+    <p>
+      Takeyours is the ultimate global dating platform, connecting individuals who are serious about finding meaningful relationships. With intuitive matching, real-time video interactions, and a worldwide community, your ideal match is just a heartbeat away. Fast, secure, and user-friendly — Takeyours is where love finds you.
+    </p>
+  </section>
+
+  <footer class="ty-footer">
+    <p>&copy; 2025 Takeyours. All rights reserved.</p>
+  </footer>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/service-worker.js")
+        .then(() => console.log("Service Worker Registered"));
+    }
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const apkDownload = document.getElementById("apk-download");
+
+      // ✅ Detect if running as PWA / TWA (installed app)
+      const isInApp =
+        window.matchMedia('(display-mode: standalone)').matches || 
+        navigator.standalone === true;
+
+      if (isInApp) {
+        apkDownload.style.display = "none";  // Hide in app
+      } else {
+        apkDownload.style.display = "block"; // Show on website
+      }
+    });
+  </script>
+</body>
+</html>

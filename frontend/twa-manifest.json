@@ -1,0 +1,17 @@
+
+{
+  "packageId": "com.takeyours.app",
+  "host": "takeyours-xbek.onrender.com",
+  "name": "Takeyours",
+  "launcherName": "Takeyours",
+  "startUrl": "/",
+  "display": "standalone",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "navigationColor": "#0d6efd",
+  "navigationColorDark": "#0d6efd",
+  "themeColor": "#0d6efd",
+  "themeColorDark": "#0d6efd",
+  "backgroundColor": "#0d6efd",
+  "generatorApp": "bubblewrap-cli"
+}

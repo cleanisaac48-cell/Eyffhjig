@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Takeyours | Admin Dashboard</title>
+  <link rel="stylesheet" href="admin-dashboard.css" />
+</head>
+<body>
+  <div class="admin-container">
+    <header class="admin-header">
+      <h1>Admin Dashboard</h1>
+      <nav class="admin-nav">
+        <a href="admin-dashboard.html" class="nav-item active">Dashboard</a>
+        <a href="admin-media-updates.html" class="nav-item">
+          Media Updates
+          <span class="notification-badge" id="mediaUpdatesBadge" style="display: none;">0</span>
+        </a>
+        <a href="admin-premium-approvals.html" class="nav-item">
+          Premium Approvals
+          <span class="notification-badge" id="premiumApprovalsBadge" style="display: none;">0</span>
+        </a>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </nav>
+    </header>
+
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <h3>Total Users</h3>
+        <span id="totalUsers">0</span>
+      </div>
+      <div class="stat-card">
+        <h3>Pending Media Updates</h3>
+        <span id="pendingMedia">0</span>
+      </div>
+      <div class="stat-card">
+        <h3>Pending Premium Approvals</h3>
+        <span id="pendingPremium">0</span>
+      </div>
+      <div class="stat-card">
+        <h3>Active Premium Users</h3>
+        <span id="activePremium">0</span>
+      </div>
+    </div>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Subscription</th>
+          <th>Registration Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="userTableBody">
+        <!-- Users will be loaded here -->
+      </tbody>
+    </table>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="admin-dashboard.js"></script>
+</body>
+</html>

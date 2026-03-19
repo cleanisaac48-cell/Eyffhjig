@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Takeyours | Register</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .ty-password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: #00b894;
+    }
+    .ty-terms {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #555;
+      text-align: left;
+    }
+    .ty-terms input {
+      margin-right: 6px;
+    }
+    .ty-login-link {
+      text-align: center;
+      margin-top: 1.2rem;
+      font-size: 0.9rem;
+    }
+    .ty-login-link a {
+      color: #0984e3;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .ty-message {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: red;
+      text-align: center;
+    }
+    .ty-loading {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      color: #0984e3;
+    }
+  </style>
+</head>
+<body>
+  <div class="ty-register-box">
+    <div class="ty-logo-form">Takeyours</div>
+    <form class="ty-form" id="registerForm">
+      <label>Email *</label>
+      <input type="email" id="email" required />
+
+      <label>Password *</label>
+      <div class="ty-password">
+        <input type="password" id="password" required />
+        <button type="button" class="ty-password-toggle" onclick="toggleVisibility('password')">Show</button>
+      </div>
+
+      <label>Confirm Password *</label>
+      <div class="ty-password">
+        <input type="password" id="confirmPassword" required />
+        <button type="button" class="ty-password-toggle" onclick="toggleVisibility('confirmPassword')">Show</button>
+      </div>
+
+      <div class="ty-terms">
+        <label>
+          <input type="checkbox" required />
+          I accept the <a href="#">terms and conditions</a>
+        </label>
+      </div>
+
+      <div class="ty-message" id="registerMsg"></div>
+      <div class="ty-loading" id="loadingMsg" style="display: none;">Processing...</div>
+
+      <button type="submit" class="ty-submit-btn">Sign Up</button>
+    </form>
+
+    <div class="ty-login-link">
+      Already have an account? <a href="login.html">Login</a> <!-- ✅ Fixed -->
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    function toggleVisibility(id) {
+      const input = document.getElementById(id);
+      const toggleBtn = input.nextElementSibling;
+      if (input.type === "password") {
+        input.type = "text";
+        toggleBtn.innerText = "Hide";
+      } else {
+        input.type = "password";
+        toggleBtn.innerText = "Show";
+      }
+    }
+
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const msg = document.getElementById("registerMsg");
+      const loader = document.getElementById("loadingMsg");
+      msg.innerText = "";
+      loader.style.display = "block";
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      if (password !== confirmPassword) {
+        loader.style.display = "none";
+        msg.innerText = "❌ Passwords do not match.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${config.API_BASE_URL}/api/send-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        loader.style.display = "none";
+
+        if (res.ok) {
+          localStorage.setItem("email", email);
+          localStorage.setItem("password", password);
+          window.location.href = "confirm.html";
+        } else {
+          msg.innerText = `❌ ${data.error || "Failed to send OTP."}`;
+        }
+      } catch (error) {
+        loader.style.display = "none";
+        msg.innerText = "❌ Network error. Try again later.";
+      }
+    });
+  </script>
+</body>
+</html>

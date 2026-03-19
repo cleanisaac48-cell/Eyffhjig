@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Takeyours Dashboard</title>
+  <link rel="stylesheet" href="dashboard_style.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="profile-section">
+          <div class="profile-icon">
+            <img id="sidebarProfilePhoto" src="https://via.placeholder.com/100" alt="Profile">
+          </div>
+          <div class="profile-name" id="sidebarUserName"></div>
+        </div>
+      </div>
+      
+      <nav class="nav-links">
+        <a href="#" class="nav-item active">
+          <span class="nav-text">Dashboard</span>
+        </a>
+        <a href="#" onclick="checkChartsAccess(event)" class="nav-item">
+          <span class="nav-text">Charts</span>
+        </a>
+        <a href="subscriptions.html" class="nav-item">
+          <span class="nav-text">Subscriptions</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-bottom">
+        <div class="contact-info">
+          <p class="support-email">takeyours90@gmail.com</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Header -->
+      <header class="header">
+        <div class="menu-icon" id="menuToggle">☰</div>
+        <h1 class="site-title">Takeyours</h1>
+        <div class="header-actions">
+          <a href="#">Gallery</a>
+          <a href="#">Log out</a>
+          <div class="settings-icon">⚙️</div>
+        </div>
+      </header>
+
+      <!-- Filter Buttons -->
+      <div class="filters">
+        <button class="active" data-section="all">All Profiles</button>
+        <button data-section="selected">Selected</button>
+        <button data-section="selected-you">Selected You</button>
+        <button data-section="accepted">Accepted</button>
+        <button data-section="removed">Removed</button>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Loading profiles...</p>
+      </div>
+
+      <!-- Profiles List (Dynamic from DB) -->
+      <div class="profiles-list" id="user-container">
+        <!-- User profiles will be injected here dynamically by JS -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Floating Profile Photo (Initially Hidden) -->
+  <div id="floatingProfilePhoto" class="floating-profile-photo" style="display: none;">
+    <button id="closeProfileBtn" class="close-btn">X</button> <!-- Close Button -->
+    <img id="floatingProfilePic" src="" alt="Profile" class="profile-pic">
+    <button id="viewProfileBtn">View Profile</button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="dashboard_script.js"></script>
+
+  <!-- Sidebar Toggle Script -->
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('sidebar-visible');
+
+      if (window.innerWidth <= 768) {
+        mainContent.style.marginLeft = sidebar.classList.contains('sidebar-visible') ? '25vw' : '0';
+      } else {
+        mainContent.style.marginLeft = sidebar.classList.contains('sidebar-visible') ? '220px' : '0';
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768) {
+        mainContent.style.marginLeft = sidebar.classList.contains('sidebar-visible') ? '25vw' : '0';
+      } else {
+        mainContent.style.marginLeft = sidebar.classList.contains('sidebar-visible') ? '220px' : '0';
+      }
+    });
+  </script>
+</body>
+</html>
