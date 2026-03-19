@@ -1,4 +1,3 @@
-// JWT decode functionality
 function decodeJWT(token) {
   try {
     const parts = token.split(".");
@@ -10,618 +9,453 @@ function decodeJWT(token) {
   }
 }
 
-// Add event listeners after DOM is loaded
-document.addEventListener('DOMContentLoaded', async () => {
-  // Add null checks for all event listeners
-  const container = document.getElementById('user-container');
-  const filterButtons = document.querySelectorAll('.filters button');
-  const loadingSpinner = document.getElementById('loadingSpinner');
-
+function getCurrentUserFromToken() {
   const token = localStorage.getItem("token");
+  if (!token) return null;
+  return decodeJWT(token);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const container = document.getElementById('user-container');
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  const token = localStorage.getItem("token");
+
   if (!token) {
-    if (container) {
-      container.innerHTML = "<p>Please log in first!</p>";
-    }
+    if (container) container.innerHTML = "<p>Please log in first!</p>";
     if (loadingSpinner) loadingSpinner.style.display = 'none';
     return;
   }
 
   const currentUser = getCurrentUserFromToken();
   const currentUserEmail = currentUser ? currentUser.email : null;
+  const userRole = currentUser ? (currentUser.role || localStorage.getItem("userRole") || 'seeker') : 'seeker';
 
   if (!currentUserEmail) {
-    if (container) {
-      container.innerHTML = "<p>Unable to retrieve user info from token.</p>";
-    }
+    if (container) container.innerHTML = "<p>Unable to retrieve user info.</p>";
     if (loadingSpinner) loadingSpinner.style.display = 'none';
     return;
   }
 
-  let allProfiles = [];
-  let selectedProfiles = [];
-  let selectedYouProfiles = [];
-  let removedProfiles = [];
-  let acceptedProfiles = [];
-  let activeSection = "all";
+  // Show role badge
+  const roleBadge = document.getElementById('sidebarRoleBadge');
+  if (roleBadge) roleBadge.textContent = userRole === 'employer' ? 'Employer' : 'Job Seeker';
 
-  // Show spinner
+  // Show correct filter tabs
+  const seekerFilters = document.getElementById('seekerFilters');
+  const employerFilters = document.getElementById('employerFilters');
+  if (userRole === 'employer') {
+    if (seekerFilters) seekerFilters.style.display = 'none';
+    if (employerFilters) employerFilters.style.display = 'flex';
+  }
+
+  let matchProfiles = [];
+  let appliedProfiles = [];
+  let shortlistedProfiles = [];
+  let applicationProfiles = [];
+  let shortlistedByMeProfiles = [];
+  let chatEnabledProfiles = [];
+
+  let activeSection = userRole === 'employer' ? 'applications' : 'matches';
+
   if (loadingSpinner) loadingSpinner.style.display = 'flex';
   if (container) container.style.display = 'none';
 
   try {
-    const response = await fetch(`${config.API_BASE_URL}/api/user/profile-photo/${currentUserEmail}`, {
-      method: "GET",
+    // Fetch current user profile photo
+    const photoRes = await fetch(`${config.API_BASE_URL}/api/user/profile-photo/${currentUserEmail}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    let profile_photo_url = null;
-    if (response.ok) {
-      const data = await response.json();
-      profile_photo_url = data.profile_photo_url;
-      console.log('✅ Current user profile photo URL:', profile_photo_url);
-    } else {
-      console.error('❌ Failed to fetch current user profile photo:', response.status);
+    if (photoRes.ok) {
+      const photoData = await photoRes.json();
+      const profileIcon = document.querySelector('.profile-icon img');
+      if (profileIcon && photoData.profile_photo_url) {
+        profileIcon.src = photoData.profile_photo_url;
+        profileIcon.onerror = () => { profileIcon.src = 'https://via.placeholder.com/100?text=No+Photo'; };
+      }
     }
 
     const profileIcon = document.querySelector('.profile-icon img');
     if (profileIcon) {
-      const profilePhotoUrl = profile_photo_url || null;
-      if (profilePhotoUrl && profilePhotoUrl !== 'null' && profilePhotoUrl !== null) {
-        profileIcon.src = profilePhotoUrl;
-        profileIcon.onerror = () => {
-          console.error("❌ Profile icon failed to load:", profilePhotoUrl);
-          profileIcon.src = "https://via.placeholder.com/100?text=No+Photo";
-        };
+      profileIcon.addEventListener('click', () => showFloatingProfile(currentUser, 'edit'));
+    }
+
+    // Fetch matching profiles based on role
+    const matchRes = await fetch(`${config.API_BASE_URL}/api/users/${currentUserEmail}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (matchRes.ok) {
+      const matchData = await matchRes.json();
+      if (userRole === 'seeker') {
+        matchProfiles = matchData.users || matchData || [];
       } else {
-        console.log("❌ No profile photo for current user.");
-        profileIcon.src = "https://via.placeholder.com/100?text=No+Photo";
+        applicationProfiles = matchData.users || matchData || [];
       }
-      profileIcon.onload = function() {
-        console.log('✅ Profile icon loaded:', this.src);
-      };
     }
 
-    // Show the big profile photo when clicked
-    if (profileIcon) {
-      profileIcon.addEventListener('click', () => {
-        showFloatingProfile(currentUser, 'edit');
+    // Fetch interactions
+    const interactRes = await fetch(`${config.API_BASE_URL}/api/users/interactions/${currentUserEmail}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    let myInteractions = [];
+    if (interactRes.ok) {
+      myInteractions = await interactRes.json();
+    }
+
+    if (userRole === 'seeker') {
+      // Applied = seeker's "selected" actions (applied to companies)
+      appliedProfiles = myInteractions.filter(u => u.action === 'applied' || u.action === 'selected');
+
+      // Shortlisted = companies who shortlisted this seeker (via selected-you equivalent)
+      const shortlistRes = await fetch(`${config.API_BASE_URL}/api/users/shortlisted-me/${currentUserEmail}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-    }
+      if (shortlistRes.ok) {
+        shortlistedProfiles = await shortlistRes.json();
+      }
 
-    const userResponse = await fetch(`${config.API_BASE_URL}/api/users/${currentUserEmail}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` }
-    });
+      // Filter out applied profiles from match list
+      const appliedIds = appliedProfiles.map(u => u.id);
+      matchProfiles = matchProfiles.filter(p => !appliedIds.includes(p.id));
 
-    if (!userResponse.ok) {
-      const errorData = await userResponse.json();
-      throw new Error(errorData.message);
-    }
-
-    const responseData = await userResponse.json();
-
-    if (responseData.shouldAdjustPreferences) {
-      allProfiles = [];
     } else {
-      allProfiles = responseData.users || responseData || [];
+      // Employer: shortlisted by me
+      shortlistedByMeProfiles = myInteractions.filter(u => u.action === 'shortlisted' || u.action === 'selected');
+      // Chat enabled
+      chatEnabledProfiles = myInteractions.filter(u => u.action === 'chat_enabled' || u.action === 'accepted');
+
+      // Filter applied from application list
+      const processedIds = [...shortlistedByMeProfiles, ...chatEnabledProfiles].map(u => u.id);
+      applicationProfiles = applicationProfiles.filter(p => !processedIds.includes(p.id));
     }
-
-    // Fetch all user interactions to categorize profiles
-    const interactionsResponse = await fetch(`${config.API_BASE_URL}/api/users/interactions/${currentUserEmail}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    let userInteractions = [];
-    if (interactionsResponse.ok) {
-      userInteractions = await interactionsResponse.json();
-    }
-
-    // Categorize profiles based on interactions
-    selectedProfiles = userInteractions.filter(u => u.action === 'selected').map(u => ({...u, originalLocation: u.original_location || 'all'}));
-    removedProfiles = userInteractions.filter(u => u.action === 'removed').map(u => ({...u, originalLocation: u.original_location || 'all'}));
-    acceptedProfiles = userInteractions.filter(u => u.action === 'accepted').map(u => ({...u, originalLocation: u.original_location || 'selected-you'}));
-
-    // Remove already categorized profiles from allProfiles
-    const interactedUserIds = userInteractions.map(u => u.id);
-    allProfiles = allProfiles.filter(profile => !interactedUserIds.includes(profile.id));
-
-    const selectedYouResponse = await fetch(`${config.API_BASE_URL}/api/users/selected-you/${currentUserEmail}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (selectedYouResponse.ok) {
-      let rawSelectedYouProfiles = await selectedYouResponse.json();
-
-      // Remove profiles that are already in accepted section
-      const acceptedUserIds = acceptedProfiles.map(u => u.id);
-      selectedYouProfiles = rawSelectedYouProfiles
-        .filter(profile => !acceptedUserIds.includes(profile.id))
-        .map(u => ({...u, originalLocation: 'selected-you'}));
-    } else {
-      console.error("Error fetching selected-you profiles.");
-    }
-
-    // Fetch match scores for all profiles
-    const matchScoresResponse = await fetch(`${config.API_BASE_URL}/api/users/match-scores/${currentUserEmail}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    let matchScores = {};
-    if (matchScoresResponse.ok) {
-      matchScores = await matchScoresResponse.json();
-    }
-
-    // Assign match scores to profiles
-    allProfiles = allProfiles.map(profile => ({
-      ...profile,
-      matchScore: matchScores[profile.id] || 0 // Default to 0 if no score
-    }));
-    selectedProfiles = selectedProfiles.map(profile => ({
-      ...profile,
-      matchScore: matchScores[profile.id] || 0
-    }));
-    selectedYouProfiles = selectedYouProfiles.map(profile => ({
-      ...profile,
-      matchScore: matchScores[profile.id] || 0
-    }));
-    acceptedProfiles = acceptedProfiles.map(profile => ({
-      ...profile,
-      matchScore: matchScores[profile.id] || 0
-    }));
-
-    // Sort all profile arrays by match score in descending order
-    allProfiles.sort((a, b) => b.matchScore - a.matchScore);
-    selectedProfiles.sort((a, b) => b.matchScore - a.matchScore);
-    selectedYouProfiles.sort((a, b) => b.matchScore - a.matchScore);
-    acceptedProfiles.sort((a, b) => b.matchScore - a.matchScore);
-
-
-    // Hide spinner and show content
-    if (loadingSpinner) loadingSpinner.style.display = 'none';
-    if (container) container.style.display = 'block';
-
-    renderProfiles();
 
   } catch (error) {
-    console.error(error);
+    console.error('Dashboard load error:', error);
     if (container) {
-      container.innerHTML = `<p>Error: ${error.message}</p>`;
+      container.innerHTML = `<p>Error loading dashboard: ${error.message}</p>`;
       container.style.display = 'block';
     }
-    if (loadingSpinner) loadingSpinner.style.display = 'none';
   }
 
-  filterButtons.forEach(btn => {
+  if (loadingSpinner) loadingSpinner.style.display = 'none';
+  if (container) container.style.display = 'block';
+
+  // Set up filter buttons
+  const filterBtns = document.querySelectorAll('.filters button');
+  filterBtns.forEach(btn => {
     btn.addEventListener("click", () => {
-      filterButtons.forEach(b => b.classList.remove("active"));
+      filterBtns.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       activeSection = btn.dataset.section;
       renderProfiles();
     });
   });
 
+  renderProfiles();
+
   function renderProfiles() {
     if (!container) return;
     container.innerHTML = "";
 
-    let profilesToRender = [];
-    if (activeSection === "all") profilesToRender = allProfiles;
-    if (activeSection === "selected") profilesToRender = selectedProfiles;
-    if (activeSection === "selected-you") profilesToRender = selectedYouProfiles;
-    if (activeSection === "removed") profilesToRender = removedProfiles;
-    if (activeSection === "accepted") profilesToRender = acceptedProfiles;
+    let profiles = [];
+    if (userRole === 'seeker') {
+      if (activeSection === 'matches') profiles = matchProfiles;
+      else if (activeSection === 'applied') profiles = appliedProfiles;
+      else if (activeSection === 'shortlisted') profiles = shortlistedProfiles;
+    } else {
+      if (activeSection === 'applications') profiles = applicationProfiles;
+      else if (activeSection === 'shortlisted_by_me') profiles = shortlistedByMeProfiles;
+      else if (activeSection === 'chat_enabled') profiles = chatEnabledProfiles;
+    }
 
-    if (profilesToRender.length === 0) {
-      if (activeSection === "all") {
-        container.innerHTML = `
-          <div class="no-matches-message">
-            <h3>No users found</h3>
-            <p>No users found matching your preferences. Try adjusting your gender, location, or age range preferences.</p>
-            <button onclick="window.location.href='edit-profile.html'" class="adjust-preferences-btn">
-              Adjust Preferences
-            </button>
-          </div>
-        `;
-      } else {
-        container.innerHTML = "<p>No profiles found.</p>";
-      }
+    if (profiles.length === 0) {
+      const emptyMsg = getEmptyMessage(activeSection, userRole);
+      container.innerHTML = `<div class="no-matches-message"><h3>${emptyMsg.title}</h3><p>${emptyMsg.body}</p></div>`;
       return;
     }
 
-    profilesToRender.forEach(user => {
-      const age = user.dob ? new Date().getFullYear() - new Date(user.dob).getFullYear() : 'Unknown';
-      const photoUrl = user.profile_photo_url && user.profile_photo_url.trim() !== '' ? user.profile_photo_url : 'https://via.placeholder.com/100?text=No+Photo';
-      const videoUrl = user.profile_video_url && user.profile_video_url.trim() !== '' ? user.profile_video_url : null;
-      const countryOfBirth = user.country_of_birth || 'Unknown';
-      const matchScore = user.matchScore !== undefined && user.matchScore > 0 ? `${user.matchScore}%` : 'N/A';
-
-      const userCard = document.createElement("div");
-      userCard.classList.add("profile-card");
-
-      userCard.innerHTML = `
-        <div class="profile-info">
-          <img src="${photoUrl}" alt="Profile" class="profile-pic" id="profilePic-${user.id}"
-               onerror="console.error('❌ Profile pic failed for user ${user.id}:', this.src); this.src='https://via.placeholder.com/100?text=No+Photo';"
-               onload="console.log('✅ Profile pic loaded for user ${user.id}:', this.src);">
-          <div class="profile-details">
-            <h3>${user.full_name || 'Unknown Name'}</h3>
-            <p>${age} yrs</p>
-            <p>${countryOfBirth}</p>
-          </div>
-          <span class="score" data-score="${matchScore}">${matchScore}</span>
-        </div>
-        <div class="profile-video">
-          ${videoUrl ? `<video src="${videoUrl}" controls preload="metadata" style="max-width: 100%; height: auto;"
-               onerror="console.error('❌ Profile video failed for user ${user.id}:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';"
-               oncanplay="console.log('✅ Profile video ready for user ${user.id}');">
-               </video>
-               <p style="display:none; color:red;">Video failed to load</p>` : "<p>No video available</p>"}
-        </div>
-        <div class="profile-actions"></div>
-      `;
-
-      const actions = userCard.querySelector(".profile-actions");
-
-      if (activeSection === "all") {
-        actions.innerHTML = `
-          <button class="select-btn">Select</button>
-          <button class="remove-btn">Remove</button>
-        `;
-
-        const selectButton = actions.querySelector(".select-btn");
-        if (selectButton) {
-          selectButton.addEventListener("click", async (event) => {
-            if (selectButton.disabled) return;
-            selectButton.disabled = true;
-            selectButton.textContent = 'Processing...';
-
-            try {
-              await moveProfile(user, 'all', 'selected', 'selected');
-            } finally {
-              selectButton.disabled = false;
-              selectButton.textContent = 'Select';
-            }
-          });
-        }
-
-        const removeButton = actions.querySelector(".remove-btn");
-        if (removeButton) {
-          removeButton.addEventListener("click", async () => {
-            await moveProfile(user, 'all', 'removed', 'removed');
-          });
-        }
-
-      } else if (activeSection === "selected") {
-        actions.innerHTML = `
-          <button class="select-btn">Cancel Selection</button>
-          <button class="remove-btn">Remove</button>
-        `;
-
-        const cancelButton = actions.querySelector(".select-btn");
-        if (cancelButton) {
-          cancelButton.addEventListener("click", async () => {
-            await moveProfile(user, 'selected', user.originalLocation || 'all', null);
-          });
-        }
-
-        const removeButton = actions.querySelector(".remove-btn");
-        if (removeButton) {
-          removeButton.addEventListener("click", async () => {
-            await moveProfile(user, 'selected', 'removed', 'removed');
-          });
-        }
-
-      } else if (activeSection === "selected-you") {
-        actions.innerHTML = `
-          <button class="select-btn">Accept</button>
-          <button class="remove-btn">Reject</button>
-        `;
-
-        const acceptButton = actions.querySelector(".select-btn");
-        if (acceptButton) {
-          acceptButton.addEventListener("click", async (event) => {
-            if (acceptButton.disabled) return;
-            acceptButton.disabled = true;
-            acceptButton.textContent = 'Processing...';
-
-            try {
-              await createMutualMatch(user, 'selected-you', 'accepted', 'accepted');
-            } finally {
-              acceptButton.disabled = false;
-              acceptButton.textContent = 'Accept';
-            }
-          });
-        }
-
-        const rejectButton = actions.querySelector(".remove-btn");
-        if (rejectButton) {
-          rejectButton.addEventListener("click", async () => {
-            await moveProfile(user, 'selected-you', 'removed', 'removed');
-          });
-        }
-
-      } else if (activeSection === "accepted") {
-        actions.innerHTML = `
-          <button class="match-btn">Matched</button>
-          <button class="remove-btn">Cancel Match</button>
-        `;
-
-        const matchedButton = actions.querySelector(".match-btn");
-        if (matchedButton) {
-          matchedButton.addEventListener("click", async (event) => {
-            if (matchedButton.disabled) return;
-            matchedButton.disabled = true;
-            matchedButton.textContent = 'Loading...';
-
-            try {
-              const subscription = await checkUserSubscription();
-              if (subscription === 'free') {
-                showPremiumNotification();
-              } else {
-                window.location.href = `chat.html?user=${user.id}&name=${encodeURIComponent(user.full_name)}`;
-              }
-            } finally {
-              matchedButton.disabled = false;
-              matchedButton.textContent = 'Matched';
-            }
-          });
-        }
-
-        const cancelMatchButton = actions.querySelector(".remove-btn");
-        if (cancelMatchButton) {
-          cancelMatchButton.addEventListener("click", async () => {
-            await moveProfile(user, 'accepted', 'removed', 'removed');
-          });
-        }
-
-      } else if (activeSection === "removed") {
-        actions.innerHTML = `
-          <button class="restore-btn">Restore</button>
-        `;
-
-        const restoreButton = actions.querySelector(".restore-btn");
-        if (restoreButton) {
-          restoreButton.addEventListener("click", async () => {
-            await moveProfile(user, 'removed', user.originalLocation || 'all', null);
-          });
-        }
-      }
-
-      const profilePic = userCard.querySelector(`#profilePic-${user.id}`);
-      if (profilePic) {
-        profilePic.addEventListener('click', () => {
-          showFloatingProfile(user);
-        });
-      }
-
-      container.appendChild(userCard);
+    profiles.forEach(profile => {
+      const card = createProfileCard(profile, activeSection, userRole);
+      container.appendChild(card);
     });
   }
 
-  async function createMutualMatch(user, fromSection, toSection, action) {
-    try {
-      const response = await fetch(`${config.API_BASE_URL}/api/users/mutual-match`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          targetUserId: user.id,
-          action: action,
-          originalLocation: user.originalLocation || fromSection
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create mutual match');
-      }
-
-      // Update frontend arrays - remove from selected-you, add to accepted
-      selectedYouProfiles = selectedYouProfiles.filter(u => u.id !== user.id);
-      acceptedProfiles.push({ ...user, originalLocation: user.originalLocation || fromSection });
-
-      renderProfiles();
-
-    } catch (error) {
-      console.log('Error creating mutual match:', error);
-    }
+  function getEmptyMessage(section, role) {
+    const msgs = {
+      matches: { title: 'No Matching Companies', body: 'No companies match your preferences yet. Update your preferences to find more opportunities.' },
+      applied: { title: 'No Applications', body: "You haven't applied to any companies yet. Browse matches and apply!" },
+      shortlisted: { title: 'Not Shortlisted Yet', body: 'No companies have shortlisted you yet. Keep your profile strong!' },
+      applications: { title: 'No Applications', body: 'No job seekers have applied yet. Ensure your job post preferences match candidates.' },
+      shortlisted_by_me: { title: 'No Shortlisted Candidates', body: 'You have not shortlisted any candidates yet. Browse applications.' },
+      chat_enabled: { title: 'No Chat Connections', body: 'Shortlist candidates and activate chat to connect with them.' }
+    };
+    return msgs[section] || { title: 'Nothing Here', body: '' };
   }
 
-  async function moveProfile(user, fromSection, toSection, action) {
+  function createProfileCard(user, section, role) {
+    const photoUrl = user.profile_photo_url && user.profile_photo_url !== 'null'
+      ? user.profile_photo_url
+      : 'https://via.placeholder.com/100?text=No+Photo';
+
+    // Determine display fields based on role
+    let displayName, displaySub1, displaySub2;
+    const otherRole = user.orientation === 'employer' ? 'employer' : 'seeker';
+
+    if (otherRole === 'employer') {
+      displayName = user.full_name || 'Unknown Company';
+      displaySub1 = user.occupation || 'Unknown Industry';
+      displaySub2 = user.employment_type || '';
+    } else {
+      displayName = user.full_name || 'Unknown Candidate';
+      displaySub1 = user.occupation || 'No Major';
+      displaySub2 = user.employment_type || '';
+    }
+
+    // Parse video intros from liveness_video_url
+    let videoIntros = [];
     try {
-      // Update backend
-      if (action) {
-        const response = await fetch(`${config.API_BASE_URL}/api/users/interact`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            targetUserId: user.id,
-            action: action,
-            originalLocation: user.originalLocation || fromSection
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update interaction');
-        }
+      if (user.liveness_video_url && user.liveness_video_url.startsWith('[')) {
+        videoIntros = JSON.parse(user.liveness_video_url);
       }
+    } catch(e) {}
 
-      // Update frontend arrays
-      if (fromSection === 'all') allProfiles = allProfiles.filter(u => u.id !== user.id);
-      if (fromSection === 'selected') selectedProfiles = selectedProfiles.filter(u => u.id !== user.id);
-      if (fromSection === 'selected-you') selectedYouProfiles = selectedYouProfiles.filter(u => u.id !== user.id);
-      if (fromSection === 'accepted') acceptedProfiles = acceptedProfiles.filter(u => u.id !== user.id);
-      if (fromSection === 'removed') removedProfiles = removedProfiles.filter(u => u.id !== user.id);
+    // Parse docs from id_back_url
+    let docVault = [];
+    try {
+      if (user.id_back_url && user.id_back_url.startsWith('[')) {
+        docVault = JSON.parse(user.id_back_url);
+      }
+    } catch(e) {}
 
-      const userToMove = { ...user, originalLocation: user.originalLocation || fromSection };
+    const card = document.createElement("div");
+    card.classList.add("profile-card");
 
-      if (toSection === 'all') allProfiles.push(userToMove);
-      if (toSection === 'selected') selectedProfiles.push(userToMove);
-      if (toSection === 'selected-you') selectedYouProfiles.push(userToMove);
-      if (toSection === 'accepted') acceptedProfiles.push(userToMove);
-      if (toSection === 'removed') removedProfiles.push(userToMove);
+    let actionsHtml = '';
+    if (role === 'seeker') {
+      if (section === 'matches') {
+        actionsHtml = `<button class="select-btn apply-action" data-id="${user.id}">Apply</button>`;
+      } else if (section === 'applied') {
+        actionsHtml = `<span style="color:#00b894;font-weight:600;">Applied</span>`;
+      } else if (section === 'shortlisted') {
+        const chatAllowed = user.action === 'chat_enabled';
+        actionsHtml = chatAllowed
+          ? `<button class="match-btn chat-action" data-id="${user.id}" data-name="${encodeURIComponent(displayName)}">Chat</button>`
+          : `<span style="color:#888;">Shortlisted – awaiting chat</span>`;
+      }
+    } else {
+      // Employer
+      if (section === 'applications') {
+        actionsHtml = `
+          <button class="select-btn shortlist-action" data-id="${user.id}">Shortlist</button>
+          <button class="remove-btn ignore-action" data-id="${user.id}">Ignore</button>`;
+      } else if (section === 'shortlisted_by_me') {
+        actionsHtml = `
+          <button class="match-btn activate-chat-action" data-id="${user.id}" data-name="${encodeURIComponent(displayName)}">Activate Chat</button>
+          <button class="remove-btn unshortlist-action" data-id="${user.id}">Remove</button>`;
+      } else if (section === 'chat_enabled') {
+        actionsHtml = `<button class="match-btn chat-action" data-id="${user.id}" data-name="${encodeURIComponent(displayName)}">Open Chat</button>`;
+      }
+    }
 
-      renderProfiles();
+    // Build videos section
+    let videosHtml = '';
+    if (videoIntros.length > 0) {
+      videosHtml = videoIntros.map(v => `
+        <div style="margin-bottom:8px;">
+          <p style="font-size:0.8rem;color:#555;margin-bottom:4px;">${v.name || 'Video'}</p>
+          <video src="${v.url}" controls preload="metadata" style="max-width:100%;height:auto;border-radius:6px;"></video>
+        </div>`).join('');
+    } else if (user.profile_video_url) {
+      videosHtml = `<video src="${user.profile_video_url}" controls preload="metadata" style="max-width:100%;height:auto;border-radius:6px;"></video>`;
+    } else {
+      videosHtml = '<p style="color:#888;font-size:0.9rem;">No videos uploaded</p>';
+    }
 
-    } catch (error) {
-      console.log('Error moving profile:', error);
+    // Build docs section
+    let docsHtml = '';
+    if (docVault.length > 0 && (role === 'employer' || section === 'shortlisted')) {
+      docsHtml = `<div style="margin-top:10px;"><p style="font-weight:600;font-size:0.9rem;">Documents:</p>` +
+        docVault.map(d => `<a href="${d.url}" target="_blank" style="display:block;color:#0984e3;font-size:0.85rem;margin-bottom:4px;">📄 ${d.name || 'Document'}</a>`).join('') +
+        `</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="profile-info">
+        <img src="${photoUrl}" alt="Profile" class="profile-pic profile-pic-click" data-id="${user.id}"
+             onerror="this.src='https://via.placeholder.com/100?text=No+Photo';">
+        <div class="profile-details">
+          <h3>${displayName}</h3>
+          <p>${displaySub1}</p>
+          ${displaySub2 ? `<p>${displaySub2}</p>` : ''}
+        </div>
+      </div>
+      <div class="profile-video">${videosHtml}</div>
+      ${docsHtml}
+      <div class="profile-actions">${actionsHtml}</div>
+    `;
+
+    // Wire up action buttons
+    const applyBtn = card.querySelector('.apply-action');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', async () => {
+        applyBtn.disabled = true; applyBtn.textContent = 'Applying...';
+        await interactWithProfile(user.id, 'applied');
+        matchProfiles = matchProfiles.filter(u => u.id !== user.id);
+        appliedProfiles.push({ ...user, action: 'applied' });
+        renderProfiles();
+      });
+    }
+
+    const shortlistBtn = card.querySelector('.shortlist-action');
+    if (shortlistBtn) {
+      shortlistBtn.addEventListener('click', async () => {
+        shortlistBtn.disabled = true; shortlistBtn.textContent = 'Shortlisting...';
+        await interactWithProfile(user.id, 'shortlisted');
+        applicationProfiles = applicationProfiles.filter(u => u.id !== user.id);
+        shortlistedByMeProfiles.push({ ...user, action: 'shortlisted' });
+        renderProfiles();
+      });
+    }
+
+    const ignoreBtn = card.querySelector('.ignore-action');
+    if (ignoreBtn) {
+      ignoreBtn.addEventListener('click', async () => {
+        await interactWithProfile(user.id, 'removed');
+        applicationProfiles = applicationProfiles.filter(u => u.id !== user.id);
+        renderProfiles();
+      });
+    }
+
+    const activateChatBtn = card.querySelector('.activate-chat-action');
+    if (activateChatBtn) {
+      activateChatBtn.addEventListener('click', async () => {
+        activateChatBtn.disabled = true; activateChatBtn.textContent = 'Activating...';
+        await interactWithProfile(user.id, 'chat_enabled');
+        shortlistedByMeProfiles = shortlistedByMeProfiles.filter(u => u.id !== user.id);
+        chatEnabledProfiles.push({ ...user, action: 'chat_enabled' });
+        renderProfiles();
+      });
+    }
+
+    const unshortlistBtn = card.querySelector('.unshortlist-action');
+    if (unshortlistBtn) {
+      unshortlistBtn.addEventListener('click', async () => {
+        await interactWithProfile(user.id, 'removed');
+        shortlistedByMeProfiles = shortlistedByMeProfiles.filter(u => u.id !== user.id);
+        renderProfiles();
+      });
+    }
+
+    const chatBtns = card.querySelectorAll('.chat-action');
+    chatBtns.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sub = await checkUserSubscription();
+        if (sub === 'free') {
+          showPremiumNotification();
+        } else {
+          window.location.href = `chat.html?user=${btn.dataset.id}&name=${btn.dataset.name}`;
+        }
+      });
+    });
+
+    const profilePicClick = card.querySelector('.profile-pic-click');
+    if (profilePicClick) {
+      profilePicClick.addEventListener('click', () => showFloatingProfile(user));
+    }
+
+    return card;
+  }
+
+  async function interactWithProfile(targetUserId, action) {
+    try {
+      const res = await fetch(`${config.API_BASE_URL}/api/users/interact`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ targetUserId, action, originalLocation: activeSection })
+      });
+      if (!res.ok) throw new Error('Interaction failed');
+    } catch (e) {
+      console.error('Interact error:', e);
     }
   }
 
   function showFloatingProfile(user, action = 'view') {
-    const floatingProfilePhoto = document.getElementById('floatingProfilePhoto');
-    const floatingProfilePic = document.getElementById('floatingProfilePic');
-    const viewProfileBtn = document.getElementById('viewProfileBtn');
-    const closeProfileBtn = document.getElementById('closeProfileBtn');
+    const floatingEl = document.getElementById('floatingProfilePhoto');
+    const floatingPic = document.getElementById('floatingProfilePic');
+    const viewBtn = document.getElementById('viewProfileBtn');
+    const closeBtn = document.getElementById('closeProfileBtn');
 
-    if (!floatingProfilePhoto || !floatingProfilePic || !viewProfileBtn || !closeProfileBtn) {
-      console.error("Floating profile elements not found.");
-      return;
-    }
+    if (!floatingEl || !floatingPic || !viewBtn || !closeBtn) return;
 
-    floatingProfilePic.src = user.profile_photo_url || 'https://via.placeholder.com/100';
-    floatingProfilePic.onerror = function() {
-      this.src = 'https://via.placeholder.com/100';
-    };
-    floatingProfilePhoto.style.display = 'block';
+    floatingPic.src = user.profile_photo_url || 'https://via.placeholder.com/100';
+    floatingPic.onerror = () => { floatingPic.src = 'https://via.placeholder.com/100'; };
+    floatingEl.style.display = 'block';
     document.body.style.overflow = 'hidden';
 
-    if (closeProfileBtn) {
-      closeProfileBtn.onclick = () => {
-        floatingProfilePhoto.style.display = 'none';
-        document.body.style.overflow = '';
-      };
-    }
-
-    const floatingProfileContent = floatingProfilePhoto.querySelector('.floating-profile-content');
-    if (floatingProfileContent) {
-      floatingProfileContent.addEventListener('click', (event) => {
-        event.stopPropagation();
-      });
-    }
+    closeBtn.onclick = () => {
+      floatingEl.style.display = 'none';
+      document.body.style.overflow = '';
+    };
 
     if (action === 'edit') {
-      viewProfileBtn.textContent = 'Edit Profile';
-      viewProfileBtn.onclick = () => {
-        floatingProfilePhoto.style.display = 'none';
+      viewBtn.textContent = 'Edit Profile';
+      viewBtn.onclick = () => {
+        floatingEl.style.display = 'none';
         document.body.style.overflow = '';
         window.location.href = "edit-profile.html";
       };
     } else {
-      viewProfileBtn.textContent = 'View Profile';
-      viewProfileBtn.onclick = () => {
-        floatingProfilePhoto.style.display = 'none';
+      viewBtn.textContent = 'View Profile';
+      viewBtn.onclick = () => {
+        floatingEl.style.display = 'none';
         document.body.style.overflow = '';
         window.location.href = `profile.html?id=${user.id}`;
       };
     }
   }
 
-  function getCurrentUserFromToken() {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-    return decodeJWT(token);
-  }
-
   async function checkUserSubscription() {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/api/user/subscription-status`, {
+      const res = await fetch(`${config.API_BASE_URL}/api/user/subscription-status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (response.ok) {
-        const data = await response.json();
+      if (res.ok) {
+        const data = await res.json();
         return data.subscription || 'free';
       }
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-    }
+    } catch(e) { console.error('Subscription check error:', e); }
     return 'free';
   }
 
   function showPremiumNotification() {
     const notification = document.createElement('div');
     notification.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      z-index: 10000;
-      text-align: center;
-      max-width: 400px;
-      width: 90%;
+      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+      background:white;padding:30px;border-radius:15px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:10000;
+      text-align:center;max-width:400px;width:90%;
     `;
-
     notification.innerHTML = `
-      <h3 style="color: #ff6b35; margin-bottom: 15px;">🚀 Premium Feature</h3>
-      <p style="margin-bottom: 20px;">You need to upgrade to Premium to access this feature!</p>
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button onclick="window.location.href='subscriptions.html'" style="background: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
-          Upgrade to Premium
-        </button>
-        <button onclick="this.parentElement.parentElement.remove()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
-          Cancel
-        </button>
+      <h3 style="color:#ff6b35;margin-bottom:15px;">Premium Feature</h3>
+      <p style="margin-bottom:20px;">Upgrade to Premium to access chat!</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="window.location.href='subscriptions.html'" style="background:#007BFF;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">Upgrade</button>
+        <button onclick="this.parentElement.parentElement.remove()" style="background:#6c757d;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">Cancel</button>
       </div>
     `;
-
     document.body.appendChild(notification);
-
-    setTimeout(() => {
-      if (notification.parentElement) {
-        notification.remove();
-      }
-    }, 10000);
+    setTimeout(() => { if (notification.parentElement) notification.remove(); }, 10000);
   }
 
-    // Charts access check function
-    window.checkChartsAccess = async function(event) {
-      event.preventDefault();
-      const token = localStorage.getItem("token");
-
-      try {
-        const response = await fetch(`${config.API_BASE_URL}/api/user/subscription-status`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const subscription = data.subscription || 'free';
-
-          if (subscription === 'free') {
-            showPremiumNotification();
-            return;
-          }
-        }
-
-        window.location.href = 'charts.html';
-      } catch (error) {
-        console.error('Error checking subscription:', error);
-        window.location.href = 'charts.html';
-      }
-    };
-
-    const mainContent = document.querySelector('.main-content');
-    const sidebar = document.querySelector('.sidebar');
-
-    if (mainContent && sidebar) {
-      window.addEventListener('resize', () => {
-        if (window.innerWidth <= 768) {
-          mainContent.style.marginLeft = sidebar.classList.contains('sidebar-visible') ? '25vw' : '0';
-        } else {
-          mainContent.style.marginLeft = sidebar.classList.contains('sidebar-visible') ? '220px' : '0';
-        }
-      });
-    }
+  window.checkChartsAccess = async function(event) {
+    event.preventDefault();
+    const sub = await checkUserSubscription();
+    if (sub === 'free') { showPremiumNotification(); return; }
+    window.location.href = 'charts.html';
+  };
 });

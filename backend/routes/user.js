@@ -12,8 +12,9 @@ const {
   getCurrentPreferences,
   updatePreferences,
   getUserProfilePhoto,
-  updateMedia, // Assuming updateMedia is also in userController
-  setMediaUpdateTimestamp // Assuming this controller function will be added
+  updateMedia,
+  setMediaUpdateTimestamp,
+  uploadSingleFile
 } = require("../controller/userController");
 
 // Configure multer for personal info files
@@ -26,6 +27,7 @@ router.get("/progress", getUserProgress);
 router.post("/reset-submission", resetUserSubmission);
 router.post("/reset-identity", resetIdentityOnly);
 router.post("/reset-personal", resetPersonalOnly);
+router.post("/upload-file", personalUpload.single('file'), uploadSingleFile);
 router.post("/personal", personalUpload.fields([
   { name: 'profilePhoto', maxCount: 1 },
   { name: 'profileVideo', maxCount: 1 }

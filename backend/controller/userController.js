@@ -279,10 +279,12 @@ module.exports = {
         const personalData = {
           ...req.body,
           languages: languages,
-          profile_photo_url: profilePhotoUrl,
-          profile_video_url: profileVideoUrl,
-          profile_photo_public_id: profilePhotoPublicId,
-          profile_video_public_id: profileVideoPublicId,
+          // Only override photo/video URL if a new file was actually uploaded;
+          // otherwise keep the pre-uploaded URL already in req.body
+          profile_photo_url: profilePhotoUrl || req.body.profile_photo_url || null,
+          profile_video_url: profileVideoUrl || req.body.profile_video_url || null,
+          profile_photo_public_id: profilePhotoPublicId || null,
+          profile_video_public_id: profileVideoPublicId || null,
           updated_at: new Date().toISOString(),
           current_step: 'preferences'
         };
@@ -291,6 +293,9 @@ module.exports = {
         delete personalData['languages[]'];
         delete personalData.profilePhoto;
         delete personalData.profileVideo;
+        // Remove non-DB helper fields sent from frontend
+        delete personalData.video_intros;
+        delete personalData.document_vault;
 
         // Update user record with personal information
         const { error: updateError } = await supabase
@@ -1079,6 +1084,53 @@ module.exports = {
     } catch (err) {
       console.error("❌ Error in sendMatchRequest:", err.message);
       res.status(500).json({ success: false, message: "Server error" });
+    }
+  },
+
+  // Upload a single file to Cloudinary and return its URL
+  uploadSingleFile: async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ success: false, message: "Missing token" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    try {
+      jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file provided" });
+    }
+
+    const filePath = req.file.path;
+    const mimeType = req.file.mimetype || '';
+
+    let resourceType = 'auto';
+    if (mimeType.startsWith('video/')) resourceType = 'video';
+    else if (mimeType.startsWith('image/')) resourceType = 'image';
+
+    try {
+      const result = await cloudinary.uploader.upload(filePath, {
+        resource_type: resourceType,
+        folder: 'niche_uploads',
+      });
+
+      // Clean up temp file
+      try { fs.unlinkSync(filePath); } catch(e) { /* ignore */ }
+
+      return res.json({
+        success: true,
+        url: result.secure_url,
+        public_id: result.public_id,
+        resource_type: result.resource_type
+      });
+    } catch (uploadErr) {
+      console.error("Cloudinary upload error:", uploadErr);
+      try { fs.unlinkSync(filePath); } catch(e) { /* ignore */ }
+      return res.status(500).json({ success: false, message: "Upload failed: " + uploadErr.message });
     }
   }
 };

@@ -330,27 +330,66 @@ async function fetchUsers(currentUserId) {
 
 // Function to fetch users with pre-filtering based on preferences
 async function fetchUsersWithPreFiltering(currentUserId, currentUser) {
+  const currentRole = currentUser.orientation || 'seeker'; // 'seeker' or 'employer'
+  // Seekers see employers and vice versa
+  const targetRole = currentRole === 'employer' ? 'seeker' : 'employer';
+
   let query = supabase
     .from('users')
     .select('*')
     .neq('id', currentUserId)
-    .eq('status', 'approved');
+    .eq('status', 'approved')
+    .eq('orientation', targetRole);
 
-  // Filter by preferred gender
-  if (currentUser.pref_gender) {
-    query = query.eq('gender', currentUser.pref_gender);
-  }
-
-  // Filter by preferred county (country_of_residence)
-  if (currentUser.pref_country_of_residence) {
-    query = query.eq('country_of_residence', currentUser.pref_country_of_residence);
-  }
-
-  // Filter by age range
-  if (currentUser.pref_age_min && currentUser.pref_age_max) {
-    // Calculate age from date of birth
-    query = query.gte('dob', new Date(new Date().getFullYear() - currentUser.pref_age_max, new Date().getMonth(), new Date().getDate()).toISOString())
-                 .lte('dob', new Date(new Date().getFullYear() - currentUser.pref_age_min, new Date().getMonth(), new Date().getDate()).toISOString());
+  // If seeker, apply employer's posted preferences (e.g. recency filter)
+  // If employer, apply candidate demographic filters
+  if (currentRole === 'employer') {
+    // Filter by gender preference
+    if (currentUser.pref_gender && currentUser.pref_gender !== 'Any') {
+      query = query.eq('gender', currentUser.pref_gender);
+    }
+    // Filter by minimum age
+    if (currentUser.pref_age_min) {
+      const maxDob = new Date();
+      maxDob.setFullYear(maxDob.getFullYear() - parseInt(currentUser.pref_age_min));
+      query = query.lte('dob', maxDob.toISOString());
+    }
+    // Filter by required education level (stored in pref_education)
+    if (currentUser.pref_education) {
+      const educationOrder = ['Certificate', 'Diploma', "Bachelor's", "Master's", 'PhD'];
+      const minLevel = educationOrder.indexOf(currentUser.pref_education);
+      if (minLevel >= 0) {
+        const validLevels = educationOrder.slice(minLevel);
+        query = query.in('education', validLevels);
+      }
+    }
+    // Filter relocation requirement
+    if (currentUser.pref_willing_to_relocate === 'Yes') {
+      query = query.eq('willing_to_relocate', 'Yes');
+    }
+    // Recency filter (pref_religion stores 'today'/'any')
+    if (currentUser.pref_religion === 'today') {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      query = query.gte('created_at', startOfDay.toISOString());
+    }
+  } else {
+    // Seeker: filter companies by industry preferences
+    // pref_languages stores target industries as array: {Engineering & Tech,Business & Admin}
+    if (currentUser.pref_languages && currentUser.pref_languages.length > 0) {
+      const industries = Array.isArray(currentUser.pref_languages)
+        ? currentUser.pref_languages
+        : [];
+      if (industries.length > 0) {
+        query = query.in('occupation', industries);
+      }
+    }
+    // Recency filter
+    if (currentUser.pref_religion === 'today') {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      query = query.gte('created_at', startOfDay.toISOString());
+    }
   }
 
   const { data, error } = await query;
@@ -401,7 +440,7 @@ app.get('/api/users/:email', async (req, res) => {
     }
 
     // Calculate match scores only for pre-filtered users
-    const totalAttributes = 18; // Total number of attributes being compared
+    const totalAttributes = 8; // Job platform: 8 matching attributes
     const matchedUsers = preFilteredUsers.map(user => {
       const rawScore = calculateMatchScore(user, currentUser);
       const matchScore = Math.round((rawScore / totalAttributes) * 100); // Convert to percentage
@@ -440,30 +479,59 @@ async function getUserById(userId) {
   return data;
 }
 
-// Function to calculate match score
-function calculateMatchScore(user, currentUser) {
-  let score = 0;
+// Function to calculate job-platform match score
+function calculateMatchScore(candidate, employer) {
+  // Determine which is seeker and which is employer based on orientation
+  let seeker, company;
+  if (candidate.orientation === 'seeker') {
+    seeker = candidate;
+    company = employer;
+  } else {
+    seeker = employer;
+    company = candidate;
+  }
 
-  // Check each attribute and match preferences with personal info
-  score += compareAttribute(user.gender, currentUser.pref_gender);
-  score += compareAttribute(user.dob, currentUser.pref_age_min, currentUser.pref_age_max);
-  score += compareAttribute(user.country_of_birth, currentUser.pref_country_of_birth);
-  score += compareAttribute(user.country_of_residence, currentUser.pref_country_of_residence);
-  score += compareAttribute(user.languages, currentUser.pref_languages);
-  score += compareAttribute(user.religion, currentUser.pref_religion);
-  score += compareAttribute(user.height, currentUser.pref_height);
-  score += compareAttribute(user.weight, currentUser.pref_weight);
-  score += compareAttribute(user.body_type, currentUser.pref_body_type);
-  score += compareAttribute(user.skin_color, currentUser.pref_skin_color);
-  score += compareAttribute(user.ethnicity, currentUser.pref_ethnicity);
-  score += compareAttribute(user.diet, currentUser.pref_diet);
-  score += compareAttribute(user.smoking, currentUser.pref_smoking);
-  score += compareAttribute(user.drinking, currentUser.pref_drinking);
-  score += compareAttribute(user.exercise, currentUser.pref_exercise);
-  score += compareAttribute(user.pets, currentUser.pref_pets);
-  score += compareAttribute(user.children, currentUser.pref_children);
-  score += compareAttribute(user.living_situation, currentUser.pref_living_situation);
-  score += compareAttribute(user.willing_to_relocate, currentUser.pref_willing_to_relocate);
+  let score = 0;
+  const totalAttributes = 8;
+
+  // 1. Work mode match (seeker pref_country_of_birth vs company employment_type)
+  const seekerWorkModes = (seeker.pref_country_of_birth || '').split(',').filter(Boolean);
+  if (seekerWorkModes.length === 0 || seekerWorkModes.includes(company.employment_type)) score++;
+
+  // 2. Industry match (seeker target industries vs company occupation)
+  const seekerIndustries = Array.isArray(seeker.pref_languages)
+    ? seeker.pref_languages
+    : (seeker.pref_languages || '').replace(/[{}]/g, '').split(',').filter(Boolean);
+  if (seekerIndustries.length === 0 || seekerIndustries.includes(company.occupation)) score++;
+
+  // 3. Company size match (seeker pref_country = preferred company sizes)
+  // We can't directly compare without company size field, so skip for now
+  score++; // Neutral
+
+  // 4. Salary match (seeker height = min salary, company weight = max salary)
+  const seekerMinSal = parseFloat(seeker.height) || 0;
+  const companyMaxSal = parseFloat(company.weight) || Infinity;
+  if (seekerMinSal <= companyMaxSal) score++;
+
+  // 5. Relocation match
+  const seekerRelocates = seeker.willing_to_relocate === 'Yes';
+  const companyNeedsReloc = company.pref_willing_to_relocate === 'Yes';
+  if (!companyNeedsReloc || seekerRelocates) score++;
+
+  // 6. Night shift match (seeker smoking = night shift pref, company pref_smoking = required)
+  const seekerNightShift = seeker.smoking === 'Yes';
+  const companyNightRequired = company.pref_smoking === 'Yes';
+  if (!companyNightRequired || seekerNightShift) score++;
+
+  // 7. Education match (company pref_education = min level, seeker education)
+  const educationOrder = ['Certificate', 'Diploma', "Bachelor's", "Master's", 'PhD'];
+  const seekerEduLevel = educationOrder.indexOf(seeker.education);
+  const companyMinEdu = educationOrder.indexOf(company.pref_education);
+  if (companyMinEdu < 0 || seekerEduLevel >= companyMinEdu) score++;
+
+  // 8. Major match (company pref_country_of_birth = required major, seeker occupation)
+  const companyReqMajor = company.pref_country_of_birth;
+  if (!companyReqMajor || companyReqMajor === seeker.occupation) score++;
 
   return score;
 }
@@ -570,6 +638,45 @@ app.get('/api/users/selected-you/:email', async (req, res) => {
     res.json(selectorUsersWithMatchScore);
   } catch (error) {
     console.error("Error occurred:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ✅ API route to fetch profiles that shortlisted the current seeker
+app.get('/api/users/shortlisted-me/:email', async (req, res) => {
+  const currentUserEmail = req.params.email;
+
+  try {
+    const currentUserId = await getUserIdByEmail(currentUserEmail);
+
+    // Find employers who have 'shortlisted' or 'selected' this seeker
+    const { data: interactions, error } = await supabase
+      .from('user_interactions')
+      .select(`
+        *,
+        selector_user:users!fk_current_user(*)
+      `)
+      .eq('target_user_id', currentUserId)
+      .in('action', ['shortlisted', 'selected', 'chat_enabled', 'accepted']);
+
+    if (error) {
+      console.error("Error fetching shortlisted-me interactions:", error);
+      return res.status(500).json({ success: false, message: 'Error fetching shortlisted profiles' });
+    }
+
+    if (!interactions || interactions.length === 0) {
+      return res.json([]);
+    }
+
+    const result = interactions.map(interaction => ({
+      ...interaction.selector_user,
+      action: interaction.action,
+      interactionId: interaction.id
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error("shortlisted-me error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });

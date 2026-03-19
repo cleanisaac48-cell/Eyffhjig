@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Takeyours | Register</title>
+  <title>Niche | Register</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     .ty-password-toggle {
@@ -48,11 +48,57 @@
       font-size: 0.95rem;
       color: #0984e3;
     }
+    .role-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1.2rem;
+    }
+    .role-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #555;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .role-btn:hover {
+      border-color: #00b894;
+      color: #00b894;
+    }
+    .role-btn.active {
+      border-color: #00b894;
+      background: #00b894;
+      color: white;
+    }
+    .role-label {
+      font-size: 0.85rem;
+      display: block;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
   <div class="ty-register-box">
-    <div class="ty-logo-form">Takeyours</div>
+    <div class="ty-logo-form">Niche</div>
+
+    <label style="margin-bottom:8px; display:block; font-weight:600;">I am a...</label>
+    <div class="role-selector">
+      <button type="button" class="role-btn active" id="roleSeeker" onclick="selectRole('seeker')">
+        Job Seeker
+        <span class="role-label">Looking for opportunities</span>
+      </button>
+      <button type="button" class="role-btn" id="roleEmployer" onclick="selectRole('employer')">
+        Employer
+        <span class="role-label">Hiring talent</span>
+      </button>
+    </div>
+
     <form class="ty-form" id="registerForm">
       <label>Email *</label>
       <input type="email" id="email" required />
@@ -83,12 +129,20 @@
     </form>
 
     <div class="ty-login-link">
-      Already have an account? <a href="login.html">Login</a> <!-- ✅ Fixed -->
+      Already have an account? <a href="login.html">Login</a>
     </div>
   </div>
 
   <script src="config.js"></script>
   <script>
+    let selectedRole = 'seeker';
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.getElementById('roleSeeker').classList.toggle('active', role === 'seeker');
+      document.getElementById('roleEmployer').classList.toggle('active', role === 'employer');
+    }
+
     function toggleVisibility(id) {
       const input = document.getElementById(id);
       const toggleBtn = input.nextElementSibling;
@@ -115,17 +169,15 @@
 
       if (password !== confirmPassword) {
         loader.style.display = "none";
-        msg.innerText = "❌ Passwords do not match.";
+        msg.innerText = "Passwords do not match.";
         return;
       }
 
       try {
         const res = await fetch(`${config.API_BASE_URL}/api/send-otp`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ email, password })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, role: selectedRole })
         });
 
         const data = await res.json();
@@ -134,13 +186,14 @@
         if (res.ok) {
           localStorage.setItem("email", email);
           localStorage.setItem("password", password);
+          localStorage.setItem("userRole", selectedRole);
           window.location.href = "confirm.html";
         } else {
-          msg.innerText = `❌ ${data.error || "Failed to send OTP."}`;
+          msg.innerText = data.error || "Failed to send OTP.";
         }
       } catch (error) {
         loader.style.display = "none";
-        msg.innerText = "❌ Network error. Try again later.";
+        msg.innerText = "Network error. Try again later.";
       }
     });
   </script>

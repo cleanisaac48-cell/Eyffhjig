@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Takeyours Dashboard</title>
+  <title>Niche Dashboard</title>
   <link rel="stylesheet" href="dashboard_style.css">
 </head>
 <body>
@@ -17,9 +17,10 @@
             <img id="sidebarProfilePhoto" src="https://via.placeholder.com/100" alt="Profile">
           </div>
           <div class="profile-name" id="sidebarUserName"></div>
+          <div id="sidebarRoleBadge" style="font-size:0.75rem;background:#e8f8f5;color:#00b894;padding:3px 10px;border-radius:10px;margin-top:4px;display:inline-block;"></div>
         </div>
       </div>
-      
+
       <nav class="nav-links">
         <a href="#" class="nav-item active">
           <span class="nav-text">Dashboard</span>
@@ -31,10 +32,10 @@
           <span class="nav-text">Subscriptions</span>
         </a>
       </nav>
-      
+
       <div class="sidebar-bottom">
         <div class="contact-info">
-          <p class="support-email">takeyours90@gmail.com</p>
+          <p class="support-email">support@nicheapp.co</p>
         </div>
       </div>
     </aside>
@@ -45,48 +46,48 @@
       <!-- Header -->
       <header class="header">
         <div class="menu-icon" id="menuToggle">☰</div>
-        <h1 class="site-title">Takeyours</h1>
+        <h1 class="site-title">Niche</h1>
         <div class="header-actions">
-          <a href="#">Gallery</a>
           <a href="#">Log out</a>
           <div class="settings-icon">⚙️</div>
         </div>
       </header>
 
-      <!-- Filter Buttons -->
-      <div class="filters">
-        <button class="active" data-section="all">All Profiles</button>
-        <button data-section="selected">Selected</button>
-        <button data-section="selected-you">Selected You</button>
-        <button data-section="accepted">Accepted</button>
-        <button data-section="removed">Removed</button>
+      <!-- Filter Buttons - seeker view (default) -->
+      <div class="filters" id="seekerFilters">
+        <button class="active" data-section="matches">Companies</button>
+        <button data-section="applied">Applied</button>
+        <button data-section="shortlisted">Shortlisted</button>
+      </div>
+
+      <!-- Filter Buttons - employer view -->
+      <div class="filters" id="employerFilters" style="display:none;">
+        <button class="active" data-section="applications">Applications</button>
+        <button data-section="shortlisted_by_me">Shortlisted</button>
+        <button data-section="chat_enabled">Allowed to Chat</button>
       </div>
 
       <!-- Loading Spinner -->
       <div id="loadingSpinner" class="loading-spinner">
         <div class="spinner"></div>
-        <p>Loading profiles...</p>
+        <p>Loading...</p>
       </div>
 
-      <!-- Profiles List (Dynamic from DB) -->
-      <div class="profiles-list" id="user-container">
-        <!-- User profiles will be injected here dynamically by JS -->
-      </div>
+      <!-- Profiles List -->
+      <div class="profiles-list" id="user-container"></div>
     </main>
   </div>
 
-  <!-- Floating Profile Photo (Initially Hidden) -->
+  <!-- Floating Profile Photo -->
   <div id="floatingProfilePhoto" class="floating-profile-photo" style="display: none;">
-    <button id="closeProfileBtn" class="close-btn">X</button> <!-- Close Button -->
+    <button id="closeProfileBtn" class="close-btn">X</button>
     <img id="floatingProfilePic" src="" alt="Profile" class="profile-pic">
     <button id="viewProfileBtn">View Profile</button>
   </div>
 
-  <!-- Scripts -->
   <script src="config.js"></script>
   <script src="dashboard_script.js"></script>
 
-  <!-- Sidebar Toggle Script -->
   <script>
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.querySelector('.sidebar');
@@ -94,7 +95,6 @@
 
     menuToggle.addEventListener('click', () => {
       sidebar.classList.toggle('sidebar-visible');
-
       if (window.innerWidth <= 768) {
         mainContent.style.marginLeft = sidebar.classList.contains('sidebar-visible') ? '25vw' : '0';
       } else {

@@ -68,16 +68,21 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         const step = progress.current_step || "identity";
         const status = progress.status || "pending";
 
+        // Store role from response
+        if (data.role) {
+          localStorage.setItem("userRole", data.role);
+        }
+
         if (status === "approved") {
           window.location.href = "dashboard_page.html";
         } else if (status === "disapproved") {
           window.location.href = "submission.html";
         } else {
-          if (step === "identity") window.location.href = "identity-verification.html";
-          else if (step === "personal") window.location.href = "personal.html";
+          // Identity step is skipped - go directly to personal
+          if (step === "identity" || step === "personal") window.location.href = "personal.html";
           else if (step === "preferences") window.location.href = "preferences.html";
           else if (step === "submission") window.location.href = "submission.html";
-          else window.location.href = "identity-verification.html";
+          else window.location.href = "personal.html";
         }
       } catch (err) {
         console.error("Progress fetch error:", err.message);

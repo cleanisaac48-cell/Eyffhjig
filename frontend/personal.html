@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Takeyours – Personal Info</title>
+  <title>Niche – Profile Setup</title>
   <link rel="stylesheet" href="match-form.css" />
   <style>
     .tk-spinner {
@@ -16,289 +16,280 @@
       animation: spin 1s linear infinite;
       margin: 20px auto;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .file-upload-group {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
     }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+    }
+    .file-item input[type="text"] {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .file-item .upload-status {
+      font-size: 0.8rem;
+      color: #888;
+      min-width: 80px;
+    }
+    .file-item .upload-status.done { color: #2e7d32; }
+    .file-item .upload-status.error { color: #c62828; }
+    .add-file-btn {
+      background: none;
+      border: 2px dashed #00b894;
+      color: #00b894;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .remove-file-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .progress-bar-wrap {
+      background: #e0e0e0;
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar {
+      background: #00b894;
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #2e7d32;
+      margin: 20px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .tk-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .tk-toggle-row label {
+      flex: 1;
+      margin: 0;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      border-radius: 26px;
+      transition: .3s;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px; width: 18px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      border-radius: 50%;
+      transition: .3s;
+    }
+    input:checked + .toggle-slider { background-color: #00b894; }
+    input:checked + .toggle-slider:before { transform: translateX(24px); }
   </style>
 </head>
-<div id="debugBox" style="background: #f0f0f0; padding: 10px; margin-top: 20px; font-family: monospace; font-size: 14px;"></div>
-
 <body>
-  <!-- Spinner Overlay -->
-  <div id="spinnerOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div class="tk-spinner"></div>
+  <div id="spinnerOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div class="tk-spinner" style="display:block;"></div>
   </div>
 
-  <header class="tk-header">Takeyours</header>
+  <header class="tk-header">Niche</header>
 
   <main class="tk-container">
-    <form id="personalForm" class="tk-form" enctype="multipart/form-data">
-      <h2>Personal Information</h2>
+    <form id="personalForm" class="tk-form">
+      <h2 id="formTitle">Profile Setup</h2>
+      <p class="tk-note" id="formSubtitle"></p>
 
-      <p class="tk-note">
-        📋 <strong>Please provide your information as they appear in your ID where applicable</strong>
-      </p>
+      <!-- SEEKER FIELDS -->
+      <div id="seekerFields">
+        <div class="section-title">Basic Information</div>
 
-      <label>Full Name</label>
-      <input type="text" name="full_name" required />
+        <label>Full Name</label>
+        <input type="text" name="full_name" />
 
-      <label>National ID Number</label>
-      <input type="text" name="national_id_number" required />
+        <label>Gender</label>
+        <select name="gender">
+          <option value="">Select Gender</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Other</option>
+        </select>
 
-      <label>Date of Birth</label>
-      <input type="date" name="dob" required />
+        <label>Date of Birth</label>
+        <input type="date" name="dob" />
 
-      <label>Gender</label>
-      <select name="gender" required>
-        <option value="">Select Gender</option>
-        <option>Male</option>
-        <option>Female</option>
-        <option>Non-Binary</option>
-        <option>Other</option>
-      </select>
+        <div class="section-title">Media Portfolio</div>
 
-      <label>Sexual Orientation</label>
-      <select name="orientation" required>
-        <option value="">Select</option>
-        <option>Heterosexual</option>
-        <option>Homosexual</option>
-        <option>Bisexual</option>
-        <option>Pansexual</option>
-        <option>Asexual</option>
-        <option>Other</option>
-      </select>
+        <label>Profile Photo</label>
+        <input type="file" id="profilePhotoInput" accept="image/*" />
+        <div id="photoPreviewWrap" style="margin-top:8px;"></div>
+        <input type="hidden" name="profile_photo_url" id="profilePhotoUrl" />
+        <div class="progress-bar-wrap" id="photoProgress"><div class="progress-bar" id="photoProgressBar"></div></div>
 
-      <label>Country of Birth</label>
-      <input type="text" name="country_of_birth" required />
+        <label style="margin-top:16px;">Video Introductions <span style="color:#888;font-size:0.85rem;">(up to 10 videos, max 3 min each)</span></label>
+        <div class="file-upload-group" id="videosGroup">
+          <div id="videosList"></div>
+          <button type="button" class="add-file-btn" id="addVideoBtn">+ Add Video</button>
+        </div>
+        <input type="hidden" name="video_intros" id="videoIntrosData" value="[]" />
 
-      <label>Country of Residence</label>
-      <input type="text" name="country_of_residence" required />
+        <label>Document Vault <span style="color:#888;font-size:0.85rem;">(CVs, degrees, certs – up to 10 files)</span></label>
+        <div class="file-upload-group" id="docsGroup">
+          <div id="docsList"></div>
+          <button type="button" class="add-file-btn" id="addDocBtn">+ Add Document</button>
+        </div>
+        <input type="hidden" name="document_vault" id="documentVaultData" value="[]" />
 
-      <label>County of Residence</label>
-      <input type="text" name="county_of_residence" required />
+        <div class="section-title">Education & Professional</div>
 
-      <label>Willing to Relocate?</label>
-      <select name="willing_to_relocate" required>
-        <option>Yes</option>
-        <option>No</option>
-        <option>Maybe</option>
-      </select>
+        <label>Major Category</label>
+        <select name="occupation" id="majorCategory">
+          <option value="">Select Major</option>
+          <option value="Engineering & Tech">Engineering & Tech</option>
+          <option value="Business & Admin">Business & Admin</option>
+          <option value="Health & Sciences">Health & Sciences</option>
+          <option value="Arts & Design">Arts & Design</option>
+          <option value="Humanities/Social">Humanities/Social</option>
+        </select>
 
-      <label>Languages Spoken</label>
-      <select name="languages" multiple required>
-        <option>English</option>
-        <option>Swahili</option>
-        <option>French</option>
-        <option>Arabic</option>
-        <option>Spanish</option>
-      </select>
+        <label>Sub-Major</label>
+        <select name="employment_type" id="subMajor">
+          <option value="">Select Sub-Major</option>
+        </select>
 
-      <label>Preferred Language in Relationship</label>
-      <select name="preferred_language" required>
-        <option>English</option>
-        <option>Swahili</option>
-        <option>French</option>
-        <option>Arabic</option>
-        <option>Spanish</option>
-      </select>
+        <label>Education Level</label>
+        <select name="education">
+          <option value="">Select Level</option>
+          <option>Certificate</option>
+          <option>Diploma</option>
+          <option>Bachelor's</option>
+          <option>Master's</option>
+          <option>PhD</option>
+        </select>
 
-      <label>Highest Education Level</label>
-      <select name="education" required>
-        <option>Primary</option>
-        <option>Secondary</option>
-        <option>High School</option>
-        <option>Diploma</option>
-        <option>Bachelor’s</option>
-        <option>Master’s</option>
-        <option>PhD</option>
-      </select>
+        <div class="section-title">Logistics & Pay</div>
 
-      <label>Occupation</label>
-      <input type="text" name="occupation" required />
+        <label>Current Location (City, Country)</label>
+        <input type="text" name="country_of_residence" placeholder="e.g. Nairobi, Kenya" />
 
-      <label>Employment Type</label>
-      <select name="employment_type" required>
-        <option>Full-time</option>
-        <option>Part-time</option>
-        <option>Freelancer</option>
-        <option>Self-employed</option>
-        <option>Student</option>
-        <option>Unemployed</option>
-        <option>Retired</option>
-      </select>
+        <div class="tk-toggle-row">
+          <label>Willing to Relocate?</label>
+          <label class="toggle-switch">
+            <input type="checkbox" name="willing_to_relocate" value="Yes" id="relocateToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
-      <label>Religion</label>
-      <select name="religion" required>
-        <option>Christian</option>
-        <option>Muslim</option>
-        <option>Hindu</option>
-        <option>Buddhist</option>
-        <option>Jewish</option>
-        <option>Atheist</option>
-        <option>Agnostic</option>
-        <option>Other</option>
-      </select>
+        <div class="tk-toggle-row">
+          <label>Available for Night Shift?</label>
+          <label class="toggle-switch">
+            <input type="checkbox" name="smoking" value="Yes" id="nightShiftToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
-      <label>Religious Importance</label>
-      <select name="religious_importance" required>
-        <option>Not important</option>
-        <option>Somewhat important</option>
-        <option>Very important</option>
-        <option>Mandatory</option>
-      </select>
+        <label>Minimum Acceptable Salary (monthly)</label>
+        <input type="number" name="height" min="0" placeholder="e.g. 50000" />
+      </div>
 
-      <label>Political Views</label>
-      <select name="political_views" required>
-        <option>Liberal</option>
-        <option>Moderate</option>
-        <option>Conservative</option>
-        <option>Apolitical</option>
-      </select>
+      <!-- EMPLOYER FIELDS -->
+      <div id="employerFields" style="display:none;">
+        <div class="section-title">Company Identity</div>
 
-      <label>Height (cm)</label>
-      <input type="number" name="height" min="120" max="220" required />
+        <label>Company Name</label>
+        <input type="text" name="full_name" id="companyName" />
 
-      <label>Weight (kg)</label>
-      <input type="number" name="weight" min="30" max="200" required />
+        <label>Company Logo</label>
+        <input type="file" id="companyLogoInput" accept="image/*" />
+        <div id="logoPreviewWrap" style="margin-top:8px;"></div>
+        <input type="hidden" name="profile_photo_url" id="companyLogoUrl" />
+        <div class="progress-bar-wrap" id="logoProgress"><div class="progress-bar" id="logoProgressBar"></div></div>
 
-      <label>Skin Color</label>
-      <select name="skin_color" required>
-        <option>Very Light</option>
-        <option>Light</option>
-        <option>Fair</option>
-        <option>Olive</option>
-        <option>Brown</option>
-        <option>Dark Brown</option>
-        <option>Chocolate</option>
-        <option>Deep Black</option>
-        <option>Albino</option>
-      </select>
+        <label>Industry</label>
+        <select name="occupation" id="industrySelect">
+          <option value="">Select Industry</option>
+          <option value="Engineering & Tech">Engineering & Tech</option>
+          <option value="Business & Admin">Business & Admin</option>
+          <option value="Health & Sciences">Health & Sciences</option>
+          <option value="Arts & Design">Arts & Design</option>
+          <option value="Humanities/Social">Humanities/Social</option>
+        </select>
 
-      <label>Body Type</label>
-      <select name="body_type" required>
-        <option>Slim</option>
-        <option>Athletic</option>
-        <option>Average</option>
-        <option>Curvy</option>
-        <option>Plus-size</option>
-        <option>Fit</option>
-        <option>Muscular</option>
-      </select>
+        <div class="section-title">Job Details</div>
 
-      <label>Eye Color</label>
-      <select name="eye_color" required>
-        <option>Brown</option>
-        <option>Black</option>
-        <option>Blue</option>
-        <option>Green</option>
-        <option>Hazel</option>
-        <option>Grey</option>
-        <option>Other</option>
-      </select>
+        <label>Work Mode</label>
+        <select name="employment_type">
+          <option value="">Select Work Mode</option>
+          <option>Remote</option>
+          <option>Hybrid</option>
+          <option>On-site</option>
+        </select>
 
-      <label>Hair Color</label>
-      <select name="hair_color" required>
-        <option>Black</option>
-        <option>Brown</option>
-        <option>Blonde</option>
-        <option>Red</option>
-        <option>Grey</option>
-        <option>Dyed</option>
-        <option>Bald</option>
-      </select>
+        <label>Maximum Salary Budget (monthly)</label>
+        <input type="number" name="weight" min="0" placeholder="e.g. 150000" />
 
-      <label>Ethnicity</label>
-      <select name="ethnicity" required>
-        <option>African</option>
-        <option>Asian</option>
-        <option>Caucasian</option>
-        <option>Latino</option>
-        <option>Mixed</option>
-        <option>Other</option>
-      </select>
+        <div class="tk-toggle-row">
+          <label>Shift Type</label>
+          <label class="toggle-switch">
+            <input type="checkbox" name="smoking" value="Night" id="shiftToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+          <span id="shiftLabel" style="font-size:0.9rem;color:#555;">Day Shift</span>
+        </div>
 
-      <label>Diet</label>
-      <select name="diet" required>
-        <option>Omnivore</option>
-        <option>Vegetarian</option>
-        <option>Vegan</option>
-        <option>Pescatarian</option>
-        <option>Halal</option>
-        <option>Kosher</option>
-        <option>Other</option>
-      </select>
+        <label>Office Location (City, Country)</label>
+        <input type="text" name="country_of_residence" placeholder="e.g. Nairobi, Kenya" />
 
-      <label>Smoking</label>
-      <select name="smoking" required>
-        <option>No</option>
-        <option>Occasionally</option>
-        <option>Regularly</option>
-      </select>
-
-      <label>Drinking</label>
-      <select name="drinking" required>
-        <option>No</option>
-        <option>Occasionally</option>
-        <option>Socially</option>
-        <option>Regularly</option>
-      </select>
-
-      <label>Exercise</label>
-      <select name="exercise" required>
-        <option>Never</option>
-        <option>Sometimes</option>
-        <option>Regularly</option>
-        <option>Daily</option>
-      </select>
-
-      <label>Pets</label>
-      <select name="pets" required>
-        <option>None</option>
-        <option>Dog</option>
-        <option>Cat</option>
-        <option>Bird</option>
-        <option>Reptile</option>
-        <option>Other</option>
-      </select>
-
-      <label>Living Situation</label>
-      <select name="living_situation" required>
-        <option>Alone</option>
-        <option>With Parents</option>
-        <option>With Roommates</option>
-        <option>With Children</option>
-        <option>Other</option>
-      </select>
-
-      <label>Do You Have Children?</label>
-      <select name="children" required>
-        <option>No</option>
-        <option>Yes</option>
-        <option>Prefer not to say</option>
-      </select>
-
-      <p class="tk-note">
-        📢 <strong>Don't share your social media info or contact details to avoid jokers.</strong><br />
-        🎥 <strong>Video Instructions:</strong> Record a video (max 30 seconds, under 100MB) answering at least 3 of these:<br />
-        – What makes you happiest in a relationship?<br />
-        – Describe your perfect weekend.<br />
-        – What values guide your life?<br />
-        – How do you handle conflict?<br />
-        – What are your deal breakers?<br />
-        – What's your idea of emotional intimacy?
-      </p>
-
-      <label>Profile Photo</label>
-      <input type="file" name="photo" accept="image/*" required />
-
-      <label>Profile Video (Answer Personality Questions)</label>
-      <input type="file" name="video" accept="video/*" required />
+        <div class="tk-toggle-row">
+          <label>We Provide Relocation Assistance</label>
+          <label class="toggle-switch">
+            <input type="checkbox" name="willing_to_relocate" value="Yes" id="relocationPerkToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
 
       <div class="tk-spinner" id="spinner"></div>
-      <button type="submit" id="submitBtn">
-        Continue to Preferences
-        <div id="submitSpinner" style="display: none;" class="tk-spinner"></div>
-      </button>
+      <button type="submit" id="submitBtn">Continue to Preferences</button>
     </form>
   </main>
 

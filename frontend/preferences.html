@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Takeyours – Match Preferences</title>
+  <title>Niche – Preferences</title>
   <link rel="stylesheet" href="match-form.css" />
   <style>
     .tk-spinner {
@@ -17,201 +16,229 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
     }
+    .checkbox-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: 2px solid #ddd;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .checkbox-chip input { display: none; }
+    .checkbox-chip.checked {
+      border-color: #00b894;
+      background: #e8f8f5;
+      color: #00b894;
+      font-weight: 600;
+    }
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #2e7d32;
+      margin: 20px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .recency-btn {
+      padding: 10px 20px;
+      border: 2px solid #ddd;
+      border-radius: 20px;
+      cursor: pointer;
+      background: white;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .recency-btn.active {
+      border-color: #00b894;
+      background: #00b894;
+      color: white;
+      font-weight: 600;
+    }
+    .tk-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .tk-toggle-row label { flex: 1; margin: 0; }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      border-radius: 26px;
+      transition: .3s;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px; width: 18px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      border-radius: 50%;
+      transition: .3s;
+    }
+    input:checked + .toggle-slider { background-color: #00b894; }
+    input:checked + .toggle-slider:before { transform: translateX(24px); }
   </style>
 </head>
 <body>
-  <header class="tk-header">Takeyours</header>
+  <div id="spinnerOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div class="tk-spinner" style="display:block;"></div>
+  </div>
+
+  <header class="tk-header">Niche</header>
 
   <main class="tk-container">
     <form id="preferencesForm" class="tk-form">
-      <h2>Your Match Preferences</h2>
+      <h2 id="prefTitle">Your Preferences</h2>
 
-      <label>Preferred Gender</label>
-      <select name="pref_gender" required>
-        <option value="">Select</option>
-        <option>Male</option>
-        <option>Female</option>
-        <option>Non-Binary</option>
-        <option>Any</option>
-      </select>
+      <!-- SEEKER PREFERENCES -->
+      <div id="seekerPrefs">
+        <div class="section-title">Workplace Preferences</div>
 
-      <label>Preferred Age Range</label>
-      <div style="display: flex; gap: 10px;">
-        <input type="number" name="pref_age_min" placeholder="Min" required min="18" max="80" />
-        <input type="number" name="pref_age_max" placeholder="Max" required min="18" max="80" />
+        <label>Preferred Work Mode <span style="color:#888;font-size:0.85rem;">(select all that apply)</span></label>
+        <div class="checkbox-group" id="workModeGroup">
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="work_mode" value="Remote" /> Remote
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="work_mode" value="Hybrid" /> Hybrid
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="work_mode" value="On-site" /> On-site
+          </label>
+        </div>
+
+        <label>Preferred Company Size</label>
+        <div class="checkbox-group" id="companySizeGroup">
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="company_size" value="Startup" /> Startup
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="company_size" value="Mid-size" /> Mid-size
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="company_size" value="Corporate" /> Corporate
+          </label>
+        </div>
+
+        <div class="section-title">Target Industry</div>
+        <label>Industries you want to work in <span style="color:#888;font-size:0.85rem;">(select all that apply)</span></label>
+        <div class="checkbox-group" id="targetIndustryGroup">
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="target_industry" value="Engineering & Tech" /> Engineering & Tech
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="target_industry" value="Business & Admin" /> Business & Admin
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="target_industry" value="Health & Sciences" /> Health & Sciences
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="target_industry" value="Arts & Design" /> Arts & Design
+          </label>
+          <label class="checkbox-chip" onclick="toggleChip(this)">
+            <input type="checkbox" name="target_industry" value="Humanities/Social" /> Humanities/Social
+          </label>
+        </div>
+
+        <div class="section-title">Recency Filter</div>
+        <label>Show companies based on post date</label>
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <button type="button" class="recency-btn active" id="recencyAny" onclick="setRecency('any')">All Time</button>
+          <button type="button" class="recency-btn" id="recencyToday" onclick="setRecency('today')">Posted Today</button>
+        </div>
+        <input type="hidden" name="pref_recency" id="recencyValue" value="any" />
       </div>
 
-      <label>Country of Birth</label>
-      <input type="text" name="pref_country_of_birth" required />
+      <!-- EMPLOYER PREFERENCES -->
+      <div id="employerPrefs" style="display:none;">
+        <div class="section-title">Candidate Demographics</div>
 
-      <label>Country of Residence</label>
-      <input type="text" name="pref_country_of_residence" required />
+        <label>Gender Preference</label>
+        <select name="pref_gender">
+          <option value="Any">Any</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
 
-      <label>County of Residence</label>
-      <input type="text" name="pref_county_of_residence" required />
+        <label>Minimum Candidate Age</label>
+        <input type="number" name="pref_age_min" min="18" max="65" placeholder="e.g. 21" />
 
-      <label>Preferred Country</label>
-      <input type="text" name="pref_country" required />
+        <div class="section-title">Required Qualifications</div>
 
-      <label>Preferred Languages</label>
-      <select name="pref_languages" multiple required>
-        <option>English</option>
-        <option>Swahili</option>
-        <option>French</option>
-        <option>Arabic</option>
-        <option>Spanish</option>
-        <option>Any</option>
-      </select>
+        <label>Required Major Category</label>
+        <select name="pref_country_of_birth" id="reqMajor">
+          <option value="">Any Major</option>
+          <option value="Engineering & Tech">Engineering & Tech</option>
+          <option value="Business & Admin">Business & Admin</option>
+          <option value="Health & Sciences">Health & Sciences</option>
+          <option value="Arts & Design">Arts & Design</option>
+          <option value="Humanities/Social">Humanities/Social</option>
+        </select>
 
-      <label>Preferred Religion</label>
-      <select name="pref_religion" required>
-        <option>Christian</option>
-        <option>Muslim</option>
-        <option>Hindu</option>
-        <option>Jewish</option>
-        <option>Atheist</option>
-        <option>Agnostic</option>
-        <option>Other</option>
-        <option>Any</option>
-      </select>
+        <label>Required Sub-Major</label>
+        <select name="pref_country_of_residence" id="reqSubMajor">
+          <option value="">Any Sub-Major</option>
+        </select>
 
-      <label>Importance of Matching Religion</label>
-      <select name="pref_religion_importance" required>
-        <option>Not important</option>
-        <option>Somewhat important</option>
-        <option>Very important</option>
-        <option>Mandatory</option>
-      </select>
+        <label>Minimum Education Level</label>
+        <select name="pref_education">
+          <option value="">Any Level</option>
+          <option value="Certificate">Certificate</option>
+          <option value="Diploma">Diploma</option>
+          <option value="Bachelor's">Bachelor's</option>
+          <option value="Master's">Master's</option>
+          <option value="PhD">PhD</option>
+        </select>
 
-      <label>Preferred Height (cm)</label>
-      <input type="number" name="pref_height" min="120" max="220" required />
+        <div class="section-title">Logistics Requirements</div>
 
-      <label>Preferred Weight (kg)</label>
-      <input type="number" name="pref_weight" min="30" max="200" required />
+        <div class="tk-toggle-row">
+          <label>Candidate Must Be Willing to Relocate</label>
+          <label class="toggle-switch">
+            <input type="checkbox" name="pref_willing_to_relocate" value="Yes" id="requireRelocation" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
-      <label>Preferred Body Type</label>
-      <select name="pref_body_type" required>
-        <option>Fit</option>
-        <option>Slim</option>
-        <option>Curvy</option>
-        <option>Athletic</option>
-        <option>Plus-size</option>
-        <option>Any</option>
-      </select>
+        <div class="tk-toggle-row">
+          <label>Night Shift Required</label>
+          <label class="toggle-switch">
+            <input type="checkbox" name="pref_smoking" value="Yes" id="requireNightShift" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
-      <label>Preferred Skin Color</label>
-      <select name="pref_skin_color" required>
-        <option>Very Light</option>
-        <option>Light</option>
-        <option>Fair</option>
-        <option>Olive</option>
-        <option>Brown</option>
-        <option>Dark Brown</option>
-        <option>Chocolate</option>
-        <option>Deep Black</option>
-        <option>Albino</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Ethnicity</label>
-      <select name="pref_ethnicity" required>
-        <option>African</option>
-        <option>Asian</option>
-        <option>Caucasian</option>
-        <option>Latino</option>
-        <option>Mixed</option>
-        <option>Other</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Diet</label>
-      <select name="pref_diet" required>
-        <option>Omnivore</option>
-        <option>Vegetarian</option>
-        <option>Vegan</option>
-        <option>Pescatarian</option>
-        <option>Halal</option>
-        <option>Kosher</option>
-        <option>Other</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Smoking</label>
-      <select name="pref_smoking" required>
-        <option>No</option>
-        <option>Occasionally</option>
-        <option>Yes</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Drinking</label>
-      <select name="pref_drinking" required>
-        <option>No</option>
-        <option>Occasionally</option>
-        <option>Socially</option>
-        <option>Regularly</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Exercise</label>
-      <select name="pref_exercise" required>
-        <option>Never</option>
-        <option>Sometimes</option>
-        <option>Regularly</option>
-        <option>Daily</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Pets</label>
-      <select name="pref_pets" required>
-        <option>None</option>
-        <option>Dog</option>
-        <option>Cat</option>
-        <option>Bird</option>
-        <option>Other</option>
-        <option>Any</option>
-      </select>
-
-      <label>Do You Want Kids?</label>
-      <select name="pref_children" required>
-        <option>Yes</option>
-        <option>No</option>
-        <option>Maybe</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Living Situation</label>
-      <select name="pref_living_situation" required>
-        <option>Alone</option>
-        <option>With Parents</option>
-        <option>With Roommates</option>
-        <option>With Children</option>
-        <option>Other</option>
-        <option>Any</option>
-      </select>
-
-      <label>Should They Be Willing to Relocate?</label>
-      <select name="pref_willing_to_relocate" required>
-        <option>Yes</option>
-        <option>No</option>
-        <option>Maybe</option>
-        <option>Any</option>
-      </select>
-
-      <label>Preferred Relationship Type</label>
-      <select name="pref_relationship_type" required>
-        <option>Marriage</option>
-        <option>Long-term</option>
-        <option>Short-term</option>
-        <option>Friendship</option>
-        <option>Any</option>
-      </select>
+        <div class="section-title">Recency Filter</div>
+        <label>Show candidates who applied</label>
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <button type="button" class="recency-btn active" id="recencyAnyEmp" onclick="setRecency('any')">All Time</button>
+          <button type="button" class="recency-btn" id="recencyTodayEmp" onclick="setRecency('today')">Applied Today</button>
+        </div>
+        <input type="hidden" name="pref_recency" id="recencyValueEmp" value="any" />
+      </div>
 
       <div class="tk-spinner" id="spinner"></div>
-      <button type="submit">Finish Registration</button>
+      <button type="submit" id="submitBtn">Finish Setup</button>
     </form>
   </main>
 

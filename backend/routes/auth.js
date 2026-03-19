@@ -129,7 +129,7 @@ router.post("/send-otp", async (req, res) => {
 
 // ---------- VERIFY OTP + Create User ----------
 router.post("/verify-otp", async (req, res) => {
-  const { email, otp, password } = req.body;
+  const { email, otp, password, role } = req.body;
   if (!email || !otp || !password) {
     return res.status(400).json({ error: "Missing email, OTP or password." });
   }
@@ -141,6 +141,8 @@ router.post("/verify-otp", async (req, res) => {
 
   // Reset OTP attempts on successful verification
   resetOTP(email, 'register');
+
+  const userRole = role === 'employer' ? 'employer' : 'seeker';
 
   try {
     const { data: existing, error: checkError } = await supabase
@@ -158,8 +160,9 @@ router.post("/verify-otp", async (req, res) => {
       .insert([{
         email: email,
         password: password,
-        current_step: 'identity',
-        status: 'pending'
+        current_step: 'personal',
+        status: 'pending',
+        orientation: userRole
       }])
       .select();
 
@@ -212,8 +215,10 @@ router.post("/login", async (req, res) => {
       currentStep = 'identity';
     }
 
+    const userRole = data.orientation === 'employer' ? 'employer' : 'seeker';
+
     const token = jwt.sign(
-      { email: data.email },
+      { email: data.email, role: userRole },
       process.env.JWT_SECRET,
       { expiresIn: "2h" }
     );
@@ -222,6 +227,7 @@ router.post("/login", async (req, res) => {
       message: "Login successful.",
       token,
       email: data.email,
+      role: userRole,
       current_step: currentStep,
       status: data.status || "pending"
     });
