@@ -297,6 +297,18 @@ module.exports = {
         delete personalData.video_intros;
         delete personalData.document_vault;
 
+        // Sanitize integer/numeric fields — convert empty strings to null
+        // (empty form fields submit as "" which breaks integer columns in Postgres)
+        const integerFields = ['height', 'weight', 'pref_age_min', 'pref_age_max'];
+        integerFields.forEach(field => {
+          if (personalData[field] === '' || personalData[field] === undefined) {
+            personalData[field] = null;
+          } else if (personalData[field] !== null) {
+            const parsed = parseInt(personalData[field], 10);
+            personalData[field] = isNaN(parsed) ? null : parsed;
+          }
+        });
+
         // Update user record with personal information
         const { error: updateError } = await supabase
           .from('users')
@@ -373,6 +385,7 @@ module.exports = {
 
       // Update preferences
         const preferenceFields = [
+          // Original fields
           'pref_gender', 'pref_age_min', 'pref_age_max', 'pref_location',
           'pref_education', 'pref_occupation', 'pref_religion', 'pref_ethnicity',
           'pref_languages', 'pref_interests', 'pref_lifestyle', 'pref_family_plans',
@@ -380,17 +393,32 @@ module.exports = {
           'pref_pets', 'pref_travel', 'pref_communication_style',
           'pref_conflict_resolution', 'pref_love_language', 'pref_social_habits',
           'pref_financial_habits', 'pref_living_situation', 'pref_willing_to_relocate',
-          'pref_relationship_type'
+          'pref_relationship_type',
+          // Job-platform specific repurposed columns
+          'pref_country_of_birth',      // seeker: work modes | employer: required major
+          'pref_country_of_residence',  // employer: required sub-major
+          'pref_country',               // seeker: company size preferences
+          'pref_height', 'pref_weight', 'pref_body_type', 'pref_skin_color'
         ];
 
         const preferenceUpdates = {};
+        const integerPrefFields = ['pref_age_min', 'pref_age_max'];
+
         preferenceFields.forEach(field => {
           if (req.body[field] !== undefined) {
             let value = req.body[field];
-            // Handle array fields - convert comma-separated strings to proper PostgreSQL arrays
+            // Handle array fields
             if (['pref_languages', 'pref_interests'].includes(field) && typeof value === 'string') {
-              // Convert "English,Swahili" to ["English", "Swahili"]
               value = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+            }
+            // Sanitize integer fields — empty string → null
+            if (integerPrefFields.includes(field)) {
+              if (value === '' || value === undefined || value === null) {
+                value = null;
+              } else {
+                const parsed = parseInt(value, 10);
+                value = isNaN(parsed) ? null : parsed;
+              }
             }
             preferenceUpdates[field] = value;
           }
