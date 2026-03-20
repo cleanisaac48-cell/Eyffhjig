@@ -52,12 +52,13 @@ class EmailService {
   }
 
   validateSendGridConfig(apiKey, emailUser) {
+    const verifiedSender = 'cleanisaac48@gmail.com';
     const validations = {
       hasApiKey: !!apiKey,
       correctFormat: apiKey && apiKey.startsWith('SG.'),
       minLength: apiKey && apiKey.length >= 50,
       hasEmailUser: !!emailUser,
-      correctEmailUser: emailUser === 'takeyours001@gmail.com'
+      correctEmailUser: emailUser === verifiedSender
     };
 
     console.log("🔧 RENDER DEBUG - SendGrid Validations:", validations);
@@ -84,7 +85,7 @@ class EmailService {
 
     if (!validations.correctEmailUser) {
       console.error("❌ RENDER WARNING: Email user is not the verified sender");
-      console.error(`   Expected: takeyours001@gmail.com`);
+      console.error(`   Expected: ${verifiedSender}`);
       console.error(`   Found: ${emailUser}`);
     }
 
@@ -163,8 +164,8 @@ class EmailService {
   }
 
   async sendOTP(toEmail, otp, type = 'register') {
-    const subject = type === 'register' ? "Your Takeyours OTP Code" : "Reset Your Password - OTP";
-    const title = type === 'register' ? "Welcome to Takeyours!" : "Password Reset Request";
+    const subject = type === 'register' ? "Your Niche OTP Code" : "Reset Your Password - OTP";
+    const title = type === 'register' ? "Welcome to Niche!" : "Password Reset Request";
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -191,7 +192,7 @@ class EmailService {
   }
 
   async sendStatusUpdateEmail(toEmail, status, adminMessage = '') {
-    const subject = status === "approved" ? "Profile Approved - Takeyours" : "Profile Disapproved - Takeyours";
+    const subject = status === "approved" ? "Profile Approved - Niche" : "Profile Disapproved - Niche";
     const loginLink = `${process.env.FRONTEND_URL || 'http://0.0.0.0:5000'}/login.html`;
 
     let htmlContent;
@@ -199,8 +200,8 @@ class EmailService {
       htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2ecc71;">🎉 Congratulations! Your profile has been approved.</h2>
-          <p>You can now access your dashboard and start using Takeyours to find your perfect match.</p>
-          <p><strong>Admin Message:</strong> ${adminMessage || 'Welcome to Takeyours!'}</p>
+          <p>You can now access your Niche dashboard and start exploring job opportunities.</p>
+          <p><strong>Admin Message:</strong> ${adminMessage || 'Welcome to Niche!'}</p>
           <p><a href="${loginLink}" style="background-color: #2ecc71; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Access Your Dashboard</a></p>
         </div>
       `;
@@ -208,7 +209,7 @@ class EmailService {
       htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #e74c3c;">❌ Profile Disapproved - Action Required</h2>
-          <p>Your profile submission has been disapproved and requires updates.</p>
+          <p>Your Niche profile submission has been disapproved and requires updates.</p>
           <p><strong>Admin Message:</strong> ${adminMessage || 'Please review and resubmit your information.'}</p>
           <p>Please login to your account and use the "Upload Again" button to restart your verification process.</p>
           <p><a href="${loginLink}" style="background-color: #e74c3c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Login to Resubmit</a></p>
@@ -240,12 +241,13 @@ class EmailService {
       pid: process.pid
     });
 
-    const fromEmail = process.env.EMAIL_USER || process.env.GMAIL_USER;
+    const verifiedSender = 'cleanisaac48@gmail.com';
+    const fromEmail = process.env.EMAIL_USER || process.env.GMAIL_USER || verifiedSender;
     
     // Pre-send validation
     const preValidation = {
       hasFromEmail: !!fromEmail,
-      fromEmailCorrect: fromEmail === 'takeyours001@gmail.com',
+      fromEmailCorrect: fromEmail === verifiedSender,
       hasApiKey: !!process.env.SENDGRID_API_KEY,
       apiKeyFormat: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.startsWith('SG.') : false,
       toEmailValid: toEmail && toEmail.includes('@')
@@ -254,13 +256,13 @@ class EmailService {
     console.log(`📧 RENDER DEBUG - Pre-send validation:`, preValidation);
 
     if (!preValidation.hasFromEmail) {
-      const error = new Error('CRITICAL: No sender email configured. Please set EMAIL_USER or GMAIL_USER environment variable.');
+      const error = new Error('CRITICAL: No sender email configured. Please set EMAIL_USER environment variable.');
       console.error("🚨 RENDER CRITICAL ERROR:", error.message);
       throw error;
     }
 
     if (!preValidation.fromEmailCorrect) {
-      console.error(`🚨 RENDER WARNING: Using sender email "${fromEmail}" but verified sender is "takeyours001@gmail.com"`);
+      console.error(`🚨 RENDER WARNING: Using sender email "${fromEmail}" but verified sender is "${verifiedSender}"`);
     }
 
     if (!preValidation.hasApiKey) {
@@ -279,7 +281,7 @@ class EmailService {
       to: toEmail,
       from: {
         email: fromEmail,
-        name: 'Takeyours'
+        name: 'Niche'
       },
       subject: subject,
       html: htmlContent,
@@ -336,7 +338,7 @@ class EmailService {
               console.error("💡 ACTION REQUIRED:");
               console.error("   1. Log into SendGrid Dashboard");
               console.error("   2. Go to Settings → Sender Authentication");
-              console.error("   3. Verify sender: takeyours001@gmail.com");
+              console.error("   3. Verify sender: cleanisaac48@gmail.com");
               console.error("   4. Check email for verification link");
             }
             
@@ -374,7 +376,7 @@ class EmailService {
     console.log(`📧 Sending email via SMTP to: ${toEmail}`);
 
     const mailOptions = {
-      from: `"Takeyours" <${process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
+      from: `"Niche" <${process.env.EMAIL_USER || process.env.GMAIL_USER || 'cleanisaac48@gmail.com'}>`,
       to: toEmail,
       subject: subject,
       html: htmlContent

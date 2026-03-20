@@ -62,7 +62,7 @@ const emailValidation = {
   sendGridKeyFormat: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.startsWith('SG.') : false,
   sendGridKeyLength: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.length >= 50 : false,
   hasEmailUser: !!(process.env.EMAIL_USER || process.env.GMAIL_USER),
-  emailUserCorrect: (process.env.EMAIL_USER || process.env.GMAIL_USER) === 'takeyours001@gmail.com'
+  emailUserCorrect: (process.env.EMAIL_USER || process.env.GMAIL_USER) === 'cleanisaac48@gmail.com'
 };
 
 console.log(`   SendGrid Key Present: ${emailValidation.hasSendGridKey}`);
@@ -85,7 +85,7 @@ if (!emailValidation.hasEmailUser) {
   console.error(`🚨 CRITICAL: No email user configured`);
 }
 if (!emailValidation.emailUserCorrect) {
-  console.error(`🚨 WARNING: Email user should be 'takeyours001@gmail.com' for verified sender`);
+  console.error(`🚨 WARNING: Email user should be 'cleanisaac48@gmail.com' for verified sender`);
 }
 const jwt = require("jsonwebtoken");
 const path = require("path");
