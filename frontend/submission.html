@@ -1,35 +1,68 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Niche | Submission Status</title>
-  <link rel="stylesheet" href="submission.css" />
+  <title>Niche | Welcome</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0d0d0d;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .welcome-wrap {
+      text-align: center;
+      animation: fadeIn 0.8s ease;
+    }
+
+    .brand {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .tagline {
+      font-size: 1.1rem;
+      color: #aaaaaa;
+      margin-bottom: 36px;
+    }
+
+    .redirect-msg {
+      font-size: 0.95rem;
+      color: #666;
+    }
+
+    .dots::after {
+      content: '';
+      animation: dots 1.5s steps(3, end) infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: ''; }
+      33%  { content: '.'; }
+      66%  { content: '..'; }
+      100% { content: '...'; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-
-  <!-- ✅ Spinner OUTSIDE of #mainContent -->
-  <div class="spinner-overlay" id="spinnerOverlay">
-    <div class="spinner"></div>
-  </div>
-
-  <div class="ty-container">
-    <header class="ty-header">Niche</header>
-
-    <main class="ty-content" id="mainContent" style="display: none;">
-      
-      <p class="ty-status-msg" id="reviewMessage"></p>
-
-      <div id="adminMessageContainer" class="ty-admin-message" style="display: none;">
-        <strong>Admin Feedback:</strong>
-        <p id="adminMessageText"></p>
-      </div>
-      
-      <button id="uploadAgainBtn" class="ty-upload-btn" style="display: none;">
-        Upload Again
-      </button>
-    </main>
+  <div class="welcome-wrap">
+    <div class="brand">Niche</div>
+    <div class="tagline">Welcome to Niche</div>
+    <div class="redirect-msg">Redirecting you to your dashboard<span class="dots"></span></div>
   </div>
 
   <script src="config.js"></script>
